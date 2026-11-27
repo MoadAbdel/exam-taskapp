@@ -3,6 +3,23 @@
 Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions : [SemVer](https://semver.org/lang/fr/).
 Les versions sont listees de la plus recente a la plus ancienne. Chaque entree cite le commit qui la porte.
 
+## [2.1.0] - 2026-11-27
+
+### Ajouts (E25 : outils d'audit)
+
+- Piste d'audit persistante : collection MongoDB `auditlogs`, conservee 90 jours (index TTL), une par environnement.
+  Evenements : inscription, connexion, connexion_echec, deconnexion, tache_supprimee, jeton_invalide
+  (jeton falsifie), limite_atteinte (force brute bloquee), erreur_serveur (avec requestId). Jamais de mot de passe.
+  Avant : evenements seulement dans les logs de la plateforme, gardes peu de temps et non interrogeables.
+- Outil `npm run audit:report` : evenements par type, IP suspectes, dernieres erreurs, alertes par seuil.
+- Workflow `audit.yml` quotidien sur la production et la pre-production (rapport + `npm audit`),
+  en echec avec e-mail si un seuil est depasse.
+
+### Maintenance
+
+- Dependances : actions GitHub (checkout 7, setup-node 7, upload-artifact 7, login-action 4,
+  build-push-action 7) et nginx 1.31. Dependabot vise `develop` et regroupe ses mises a jour.
+
 ## [2.0.0] - 2026-11-27
 
 Mise en production : correction des bugs (E27) et des failles (E28), documentation (E29),

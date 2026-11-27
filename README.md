@@ -55,6 +55,12 @@ Specification de l'API : [`docs/openapi.yaml`](docs/openapi.yaml). Journal des e
 - `deploy.yml` : attend que l'URL publique serve le commit pousse (`/api/health`), puis test de fumee de bout en bout.
 - `uptime.yml` : sonde des deux environnements toutes les 15 minutes, alerte par e-mail en cas d'echec.
 - `backup.yml` : sauvegarde quotidienne chiffree de la base de production.
+- `audit.yml` : rapport d'audit quotidien des deux environnements et `npm audit`, alerte si un seuil est depasse.
+
+## Audit
+
+Les evenements de securite sont enregistres dans la collection `auditlogs` (90 jours) et dans les logs.
+Rapport a la demande : `cd backend && MONGO_URI=... npm run audit:report -- --days=7`.
 
 ## Configuration
 

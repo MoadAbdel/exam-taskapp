@@ -1,6 +1,6 @@
 {
   "source": {
-    "include": ["app.js", "server.js", "config", "middleware", "models", "routes", "validators"],
+    "include": ["app.js", "server.js", "config", "middleware", "models", "routes", "validators", "scripts"],
     "includePattern": "\\.js$"
   },
   "opts": {

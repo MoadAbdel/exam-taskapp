@@ -180,3 +180,73 @@ describe('taches', () => {
     await agent.put(`/api/tasks/${task._id}`).send({}).expect(400);
   });
 });
+
+describe('audit', () => {
+  const AuditLog = () => require('../models/AuditLog');
+
+  test('les evenements de securite sont enregistres en base', async () => {
+    const agent = await signup('auditeur');
+    await request(app).post('/api/auth/login').send({ username: 'auditeur', password: 'mauvais123' });
+    await request(app).get('/api/tasks').set('Cookie', 'token=abc.def.ghi');
+    const task = (await agent.post('/api/tasks').send({ title: 'a supprimer' })).body;
+    await agent.delete(`/api/tasks/${task._id}`);
+    await agent.post('/api/auth/logout');
+
+    const events = (await AuditLog().find({}).lean()).map((e) => e.event);
+    for (const e of ['inscription', 'connexion_echec', 'jeton_invalide', 'tache_supprimee', 'deconnexion']) {
+      assert.ok(events.includes(e), `evenement ${e} absent`);
+    }
+    const echec = await AuditLog().findOne({ event: 'connexion_echec', username: 'auditeur' }).lean();
+    assert.equal(echec.status, 401);
+    assert.ok(echec.requestId);
+    assert.equal(JSON.stringify(echec).includes('mauvais123'), false); // jamais de mot de passe
+  });
+
+  test('la limite de tentatives est tracee', async () => {
+    for (let i = 0; i < 11; i++) {
+      await request(app)
+        .post('/api/auth/login')
+        .set('X-Forwarded-For', '203.0.113.9')
+        .send({ username: 'x', password: 'y' });
+    }
+    const blocage = await AuditLog().findOne({ event: 'limite_atteinte', ip: '203.0.113.9' }).lean();
+    assert.ok(blocage);
+    assert.equal(blocage.status, 429);
+  });
+
+  test('le rapport detecte une force brute et se met en forme', async () => {
+    const { buildReport, toMarkdown, THRESHOLDS } = require('../scripts/audit-report');
+    const docs = Array.from({ length: THRESHOLDS.echecsParIp }, () => ({
+      event: 'connexion_echec',
+      level: 'warn',
+      ip: '198.51.100.7',
+      username: 'admin',
+    }));
+    docs.push({
+      event: 'erreur_serveur',
+      level: 'error',
+      method: 'GET',
+      path: '/api/x',
+      requestId: 'r1',
+      meta: { error: 'boom' },
+    });
+    await AuditLog().insertMany(docs);
+
+    const report = await buildReport(1);
+    assert.ok(report.alerts.some((a) => a.includes('198.51.100.7')));
+    const md = toMarkdown(report, 'test');
+    assert.match(md, /Rapport d'audit : test/);
+    assert.match(md, /ALERTE : Force brute probable/);
+    assert.match(md, /requestId=r1/);
+  });
+
+  test("une panne de la base n'entraine pas d'erreur cote client", async () => {
+    const { audit } = require('../config/audit');
+    const original = AuditLog().create;
+    AuditLog().create = async () => {
+      throw new Error('base indisponible');
+    };
+    await audit('connexion', { ip: '1.2.3.4', method: 'POST', originalUrl: '/api/auth/login', id: 'r2' });
+    AuditLog().create = original;
+  });
+});

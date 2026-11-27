@@ -1,0 +1,132 @@
+/**
+ * @module scripts/audit-report
+ * @description Outil d'audit : analyse la piste d'audit (collection `auditlogs`) d'un environnement.
+ *
+ * Usage : MONGO_URI=... node scripts/audit-report.js [--days=7] [--fail-on-alert]
+ *         (ou `npm run audit:report`)
+ * Sortie : rapport Markdown (evenements par type, IP suspectes, dernieres erreurs avec requestId).
+ * Code de sortie 2 avec --fail-on-alert si un seuil de securite est depasse.
+ */
+const mongoose = require('mongoose');
+const AuditLog = require('../models/AuditLog');
+
+/** Seuils d'alerte sur la periode analysee. */
+const THRESHOLDS = {
+  echecsParIp: 20, // echecs de connexion depuis une meme IP : force brute probable
+  blocagesParIp: 3, // blocages par le limiteur depuis une meme IP
+  jetonsInvalides: 10, // jetons falsifies : tentative de contournement de l'authentification
+  erreursServeur: 10, // erreurs 500 : incident applicatif
+};
+
+/**
+ * Calcule le rapport d'audit sur les `days` derniers jours.
+ * @param {number} [days=7] Periode analysee.
+ * @returns {Promise<{since: Date, byEvent: object[], suspiciousIps: object[], errors: object[], alerts: string[]}>}
+ */
+async function buildReport(days = 7) {
+  const since = new Date(Date.now() - days * 24 * 3600 * 1000);
+  const recent = { createdAt: { $gte: since } };
+
+  const byEvent = await AuditLog.aggregate([
+    { $match: recent },
+    { $group: { _id: '$event', total: { $sum: 1 }, dernier: { $max: '$createdAt' } } },
+    { $sort: { total: -1 } },
+  ]);
+
+  const suspiciousIps = await AuditLog.aggregate([
+    { $match: { ...recent, event: { $in: ['connexion_echec', 'limite_atteinte', 'jeton_invalide'] } } },
+    {
+      $group: {
+        _id: '$ip',
+        echecs: { $sum: { $cond: [{ $eq: ['$event', 'connexion_echec'] }, 1, 0] } },
+        blocages: { $sum: { $cond: [{ $eq: ['$event', 'limite_atteinte'] }, 1, 0] } },
+        jetons: { $sum: { $cond: [{ $eq: ['$event', 'jeton_invalide'] }, 1, 0] } },
+        comptesVises: { $addToSet: '$username' },
+      },
+    },
+    { $sort: { echecs: -1 } },
+    { $limit: 10 },
+  ]);
+
+  // sanitizeFilter (anti-injection NoSQL) refuse les operateurs dans find() : ce filtre est
+  // construit par le serveur, pas par l'utilisateur, on le marque donc comme fiable.
+  const errors = await AuditLog.find({ createdAt: mongoose.trusted({ $gte: since }), event: 'erreur_serveur' })
+    .sort({ createdAt: -1 })
+    .limit(10)
+    .lean();
+
+  const count = (e) => byEvent.find((x) => x._id === e)?.total || 0;
+  const alerts = [];
+  for (const ip of suspiciousIps) {
+    if (ip.echecs >= THRESHOLDS.echecsParIp) alerts.push(`Force brute probable : ${ip.echecs} echecs depuis ${ip._id}`);
+    if (ip.blocages >= THRESHOLDS.blocagesParIp) alerts.push(`IP bloquee ${ip.blocages} fois : ${ip._id}`);
+  }
+  if (count('jeton_invalide') >= THRESHOLDS.jetonsInvalides) {
+    alerts.push(`${count('jeton_invalide')} jetons falsifies ou alteres`);
+  }
+  if (count('erreur_serveur') >= THRESHOLDS.erreursServeur) {
+    alerts.push(`${count('erreur_serveur')} erreurs serveur`);
+  }
+  return { since, byEvent, suspiciousIps, errors, alerts };
+}
+
+/**
+ * Met le rapport en forme (Markdown).
+ * @param {object} report Resultat de buildReport.
+ * @param {string} envName Nom de l'environnement.
+ * @returns {string}
+ */
+function toMarkdown(report, envName) {
+  const lines = [`## Rapport d'audit : ${envName}`, '', `Periode : depuis ${report.since.toISOString()}`, ''];
+  lines.push('| Evenement | Total | Dernier |', '| --- | --- | --- |');
+  for (const e of report.byEvent) lines.push(`| ${e._id} | ${e.total} | ${e.dernier.toISOString()} |`);
+  if (!report.byEvent.length) lines.push('| (aucun evenement) | 0 | - |');
+
+  lines.push('', '### IP a surveiller', '', '| IP | Echecs | Blocages | Jetons invalides | Comptes vises |');
+  lines.push('| --- | --- | --- | --- | --- |');
+  for (const ip of report.suspiciousIps) {
+    const comptes = ip.comptesVises.filter(Boolean).slice(0, 5).join(', ');
+    lines.push(`| ${ip._id} | ${ip.echecs} | ${ip.blocages} | ${ip.jetons} | ${comptes} |`);
+  }
+  if (!report.suspiciousIps.length) lines.push('| (aucune) | | | | |');
+
+  lines.push('', '### Dernieres erreurs serveur', '');
+  for (const e of report.errors) {
+    lines.push(`- ${e.createdAt.toISOString()} ${e.method} ${e.path} requestId=${e.requestId} : ${e.meta?.error}`);
+  }
+  if (!report.errors.length) lines.push('- aucune');
+
+  lines.push('', '### Alertes', '');
+  lines.push(...(report.alerts.length ? report.alerts.map((a) => `- ALERTE : ${a}`) : ['- aucune']));
+  return lines.join('\n');
+}
+
+/* c8 ignore start */
+if (require.main === module) {
+  const args = Object.fromEntries(
+    process.argv.slice(2).map((a) => {
+      const [k, v] = a.replace(/^--/, '').split('=');
+      return [k, v ?? true];
+    }),
+  );
+  const uri = process.env.MONGO_URI;
+  if (!uri) {
+    process.stderr.write('MONGO_URI manquant\n');
+    process.exit(1);
+  }
+  mongoose
+    .connect(uri, { serverSelectionTimeoutMS: 10000 })
+    .then(() => buildReport(Number(args.days) || 7))
+    .then(async (report) => {
+      process.stdout.write(`${toMarkdown(report, process.env.APP_ENV || mongoose.connection.name)}\n`);
+      await mongoose.disconnect();
+      process.exit(args['fail-on-alert'] && report.alerts.length ? 2 : 0);
+    })
+    .catch((err) => {
+      process.stderr.write(`Rapport impossible : ${err.message}\n`);
+      process.exit(1);
+    });
+}
+/* c8 ignore stop */
+
+module.exports = { buildReport, toMarkdown, THRESHOLDS };
