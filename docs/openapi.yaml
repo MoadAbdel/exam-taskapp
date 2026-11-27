@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: API Mes Taches
-  version: 2.0.0
+  version: 2.5.0
   description: |
     API REST JSON de l'application de gestion de taches.
     Authentification par cookie de session `token` (httpOnly, Secure, SameSite=Strict), pose par
