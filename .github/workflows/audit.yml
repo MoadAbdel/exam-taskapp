@@ -33,6 +33,7 @@ jobs:
     defaults:
       run:
         working-directory: backend
+        shell: bash # pipefail : "| tee" ne masque pas l echec (ces defaults remplacent ceux du workflow)
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
