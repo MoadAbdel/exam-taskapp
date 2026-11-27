@@ -10,6 +10,7 @@ export default function Login() {
 
   return (
     <AuthForm
+      key="login" // nouvelle instance a chaque changement de page (pas d'etat partage avec l'inscription)
       title="Connexion"
       submitLabel="Se connecter"
       autoCompletePassword="current-password"

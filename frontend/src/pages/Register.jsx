@@ -10,6 +10,7 @@ export default function Register() {
 
   return (
     <AuthForm
+      key="register" // nouvelle instance : l'erreur et les champs de la page Connexion ne sont pas repris
       title="Inscription"
       submitLabel="Creer mon compte"
       autoCompletePassword="new-password"
