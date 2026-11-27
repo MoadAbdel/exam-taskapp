@@ -31,6 +31,11 @@ export default function Header() {
                 </Link>
               </li>
               <li>
+                <Link to="/account" className="nav-link">
+                  Mon compte
+                </Link>
+              </li>
+              <li>
                 <button type="button" onClick={handleLogout} className="nav-link nav-button">
                   Deconnexion
                 </button>

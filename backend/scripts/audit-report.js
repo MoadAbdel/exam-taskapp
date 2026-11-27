@@ -9,6 +9,7 @@
  */
 const mongoose = require('mongoose');
 const AuditLog = require('../models/AuditLog');
+const { maskIp, maskName } = require('../config/privacy');
 
 /** Seuils d'alerte sur la periode analysee. */
 const THRESHOLDS = {
@@ -58,8 +59,9 @@ async function buildReport(days = 7) {
   const count = (e) => byEvent.find((x) => x._id === e)?.total || 0;
   const alerts = [];
   for (const ip of suspiciousIps) {
-    if (ip.echecs >= THRESHOLDS.echecsParIp) alerts.push(`Force brute probable : ${ip.echecs} echecs depuis ${ip._id}`);
-    if (ip.blocages >= THRESHOLDS.blocagesParIp) alerts.push(`IP bloquee ${ip.blocages} fois : ${ip._id}`);
+    if (ip.echecs >= THRESHOLDS.echecsParIp)
+      alerts.push(`Force brute probable : ${ip.echecs} echecs depuis ${maskIp(ip._id)}`);
+    if (ip.blocages >= THRESHOLDS.blocagesParIp) alerts.push(`IP bloquee ${ip.blocages} fois : ${maskIp(ip._id)}`);
   }
   if (count('jeton_invalide') >= THRESHOLDS.jetonsInvalides) {
     alerts.push(`${count('jeton_invalide')} jetons falsifies ou alteres`);
@@ -85,14 +87,15 @@ function toMarkdown(report, envName) {
   lines.push('', '### IP a surveiller', '', '| IP | Echecs | Blocages | Jetons invalides | Comptes vises |');
   lines.push('| --- | --- | --- | --- | --- |');
   for (const ip of report.suspiciousIps) {
-    const comptes = ip.comptesVises.filter(Boolean).slice(0, 5).join(', ');
-    lines.push(`| ${ip._id} | ${ip.echecs} | ${ip.blocages} | ${ip.jetons} | ${comptes} |`);
+    // Rapport publie dans les journaux CI (depot public) : IP tronquees et noms masques.
+    const comptes = ip.comptesVises.filter(Boolean).slice(0, 5).map(maskName).join(', ');
+    lines.push(`| ${maskIp(ip._id)} | ${ip.echecs} | ${ip.blocages} | ${ip.jetons} | ${comptes} |`);
   }
   if (!report.suspiciousIps.length) lines.push('| (aucune) | | | | |');
 
   lines.push('', '### Dernieres erreurs serveur', '');
   for (const e of report.errors) {
-    lines.push(`- ${e.createdAt.toISOString()} ${e.method} ${e.path} requestId=${e.requestId} : ${e.meta?.error}`);
+    lines.push(`- ${e.createdAt.toISOString()} ${e.method} ${e.path} requestId=${e.requestId} `);
   }
   if (!report.errors.length) lines.push('- aucune');
 

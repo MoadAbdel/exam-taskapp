@@ -92,6 +92,7 @@ app.use('/api', async (req, res, next) => {
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/tasks', require('./routes/tasks'));
+app.use('/api/account', require('./routes/account'));
 
 // Route inconnue.
 app.use((req, res) => res.status(404).json({ msg: 'Route introuvable.' }));

@@ -8,6 +8,7 @@
  * Une panne de Loki ne bloque jamais l'application : le lot est abandonne et l'erreur affichee sur stderr.
  */
 const Transport = require('winston-transport');
+const { maskIp } = require('./privacy');
 
 class LokiTransport extends Transport {
   /**
@@ -33,6 +34,9 @@ class LokiTransport extends Transport {
   log(info, callback) {
     const { level, message, timestamp, ...rest } = info;
     const ts = BigInt(Date.parse(timestamp || new Date().toISOString())) * 1000000n;
+    // RGPD : le prestataire externe ne recoit ni nom d'utilisateur ni IP complete.
+    delete rest.username;
+    if (rest.ip) rest.ip = maskIp(rest.ip);
     const line = JSON.stringify({ level, message, ...rest });
     this.queue.push({ level, ts: (ts + BigInt(this.queue.length)).toString(), line });
     if (this.queue.length >= this.maxBatch) this.flush();

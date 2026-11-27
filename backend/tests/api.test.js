@@ -263,7 +263,7 @@ describe('audit', () => {
     await AuditLog().insertMany(docs);
 
     const report = await buildReport(1);
-    assert.ok(report.alerts.some((a) => a.includes('198.51.100.7')));
+    assert.ok(report.alerts.some((a) => a.includes('198.51.100.0') && !a.includes('198.51.100.7')));
     const md = toMarkdown(report, 'test');
     assert.match(md, /Rapport d'audit : test/);
     assert.match(md, /ALERTE : Force brute probable/);

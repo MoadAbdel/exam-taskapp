@@ -20,9 +20,15 @@ export default function Register() {
         navigate('/tasks', { replace: true });
       }}
       footer={
-        <p className="switch">
-          Deja inscrit ? <Link to="/login">Se connecter</Link>
-        </p>
+        <>
+          <p className="hint">
+            Un pseudonyme suffit. Vos donnees servent uniquement au service :{' '}
+            <Link to="/privacy">politique de confidentialite</Link>.
+          </p>
+          <p className="switch">
+            Deja inscrit ? <Link to="/login">Se connecter</Link>
+          </p>
+        </>
       }
     />
   );

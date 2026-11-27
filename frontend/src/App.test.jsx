@@ -74,6 +74,32 @@ describe('session', () => {
   });
 });
 
+describe('RGPD', () => {
+  test('politique de confidentialite accessible sans compte', async () => {
+    window.history.pushState({}, '', '/privacy');
+    api.get.mockRejectedValueOnce(apiError(401, 'x'));
+    render(<App />);
+    expect(await screen.findByRole('heading', { name: /Confidentialite et donnees/ })).toBeInTheDocument();
+  });
+
+  test('mon compte : export propose et suppression confirmee par mot de passe', async () => {
+    window.history.pushState({}, '', '/account');
+    api.get.mockResolvedValueOnce({ data: { user } });
+    api.delete.mockResolvedValueOnce({});
+    render(<App />);
+    expect(await screen.findByRole('link', { name: 'Telecharger mes donnees' })).toHaveAttribute(
+      'href',
+      '/api/account/export',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Supprimer definitivement' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('mot de passe');
+    await userEvent.type(screen.getByLabelText('Mot de passe'), 'motdepasse1');
+    await userEvent.click(screen.getByRole('button', { name: 'Supprimer definitivement' }));
+    expect(await screen.findByRole('heading', { name: 'Inscription' })).toBeInTheDocument();
+    expect(api.delete).toHaveBeenCalledWith('/account', { data: { password: 'motdepasse1' } });
+  });
+});
+
 describe('taches', () => {
   const tasks = [{ _id: 't1', title: 'Courses', isCompleted: false }];
 
