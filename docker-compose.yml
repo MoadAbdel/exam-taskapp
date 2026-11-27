@@ -1,6 +1,8 @@
-# Environnement conteneurise (qualification locale) : MongoDB + API + frontend.
+# Environnement conteneurise (qualification locale) : MongoDB + API + frontend + supervision.
 # Lancement : cp .env.docker.example .env.docker && docker compose up --build -d
 # Application : http://localhost:8080
+# Grafana     : http://localhost:3001 (admin / GF_SECURITY_ADMIN_PASSWORD) - tableau de bord "Mes Taches - supervision"
+# Prometheus  : http://localhost:9090 (cibles, regles et alertes actives)
 services:
   mongo:
     image: mongo:8
@@ -21,6 +23,7 @@ services:
     environment:
       MONGO_URI: mongodb://mongo:27017/taskapp_preprod
       APP_ENV: preprod-docker
+      METRICS_ENABLED: 'true' # /metrics lu par Prometheus sur le reseau interne uniquement
     depends_on:
       mongo:
         condition: service_healthy
@@ -37,6 +40,42 @@ services:
       api:
         condition: service_healthy
 
+  prometheus:
+    image: prom/prometheus:v3.7.3
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - '127.0.0.1:9090:9090' # accessible depuis le poste seulement
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana:12.2.1
+    restart: unless-stopped
+    env_file: .env.docker # GF_SECURITY_ADMIN_PASSWORD
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+      GF_AUTH_ANONYMOUS_ENABLED: 'false'
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/taskapp.json
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - '127.0.0.1:3001:3000'
+    depends_on:
+      - prometheus
+
 volumes:
   mongo-data:
   api-logs:
+  prometheus-data:
+  grafana-data:

@@ -7,6 +7,7 @@
  */
 const AuditLog = require('../models/AuditLog');
 const logger = require('./logger');
+const { securityEvents } = require('./metrics');
 
 /** Gravite par defaut de chaque evenement. */
 const LEVELS = {
@@ -42,6 +43,7 @@ async function audit(event, req, details = {}) {
     meta: details.meta,
   };
   logger.log(entry.level, `audit:${event}`, entry);
+  securityEvents.inc({ event }); // compteur Prometheus : graphiques et alertes Grafana
   try {
     await AuditLog.create(entry);
   } catch (err) {

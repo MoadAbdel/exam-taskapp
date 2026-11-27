@@ -13,6 +13,7 @@ const logger = require('./config/logger');
 const { connectDB } = require('./config/db');
 const requestLogger = require('./middleware/requestLogger');
 const { audit } = require('./config/audit');
+const { register, metricsMiddleware } = require('./config/metrics');
 
 const app = express();
 
@@ -34,6 +35,25 @@ app.use(
 app.use(express.json({ limit: '10kb' })); // limite la taille des corps : anti deni de service
 app.use(cookieParser());
 app.use(requestLogger);
+app.use(metricsMiddleware);
+
+/**
+ * GET /metrics
+ * @summary Metriques Prometheus (format texte). Actif seulement si METRICS_ENABLED=true.
+ * Hors du prefixe /api : ni nginx ni Vercel ne l'exposent sur Internet, seul Prometheus le lit
+ * sur le reseau interne. Si METRICS_TOKEN est defini, un en-tete `Authorization: Bearer` est exige.
+ * @returns {200} Metriques au format texte Prometheus.
+ * @returns {401} Jeton absent ou incorrect.
+ * @returns {404} Metriques desactivees.
+ */
+app.get('/metrics', async (req, res) => {
+  if (!env.METRICS_ENABLED) return res.status(404).json({ msg: 'Route introuvable.' });
+  if (env.METRICS_TOKEN && req.get('authorization') !== `Bearer ${env.METRICS_TOKEN}`) {
+    return res.status(401).json({ msg: 'Jeton de metriques requis.' });
+  }
+  res.set('Content-Type', register.contentType);
+  return res.send(await register.metrics());
+});
 
 /**
  * GET /api/health

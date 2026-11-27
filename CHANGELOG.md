@@ -3,6 +3,23 @@
 Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions : [SemVer](https://semver.org/lang/fr/).
 Les versions sont listees de la plus recente a la plus ancienne. Chaque entree cite le commit qui la porte.
 
+## [2.2.0] - 2026-11-27
+
+### Ajouts (E26 : supervision)
+
+- Metriques Prometheus dans l'API (`prom-client`) : `http_requests_total`, `http_request_duration_seconds`,
+  `security_events_total`, `mongodb_up`, metriques Node.js. Routes etiquetees par modele (pas d'ID brut).
+  Endpoint `/metrics` desactive par defaut, interne, jeton optionnel.
+- Pile Docker : Prometheus (collecte toutes les 15 s, 8 regles d'alerte) et Grafana (source de donnees
+  et tableau de bord provisionnes). Ports lies a 127.0.0.1 uniquement.
+- `scripts/check-monitoring.sh` : verifie cibles, regles, alertes actives et metriques cles.
+
+### Corrections
+
+- Alerte de latence : connexion et inscription exclues (lentes volontairement a cause de bcrypt).
+- Tableau de bord : taux d'erreurs 5xx a 0 % au lieu de "No data" sans erreur ; collectes de Prometheus
+  exclues du trafic mesure.
+
 ## [2.1.0] - 2026-11-27
 
 ### Ajouts (E25 : outils d'audit)
