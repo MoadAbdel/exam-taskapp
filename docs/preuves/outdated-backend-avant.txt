@@ -1,0 +1,7 @@
+Package       Current  Wanted   Latest  Location                   Depended by
+bcryptjs        2.4.3   2.4.3    3.0.3  node_modules/bcryptjs      backend
+cors            2.8.5   2.8.6    2.8.6  node_modules/cors          backend
+dotenv         16.6.1  16.6.1  18.0.10  node_modules/dotenv        backend
+express        4.21.2  4.22.3    5.3.0  node_modules/express       backend
+jsonwebtoken    9.0.2   9.0.3    9.0.3  node_modules/jsonwebtoken  backend
+mongoose        7.8.7  7.8.14   9.13.1  node_modules/mongoose      backend

@@ -1,0 +1,70 @@
+# npm audit report
+
+body-parser  <=1.20.8 || 2.0.0-beta.1 - 2.0.2
+Severity: high
+body-parser vulnerable to denial of service when invalid limit value silently disables size enforcement - https://github.com/advisories/GHSA-v422-hmwv-36x6
+body-parser vulnerable to Denial of Service via trailing bytes after a compressed request body - https://github.com/advisories/GHSA-27r3-jxmh-p828
+Depends on vulnerable versions of qs
+fix available via `npm audit fix`
+node_modules/body-parser
+  express  4.0.0-rc1 - 4.22.2 || 5.0.0-alpha.1 - 5.0.1
+  Depends on vulnerable versions of body-parser
+  Depends on vulnerable versions of path-to-regexp
+  Depends on vulnerable versions of qs
+  node_modules/express
+
+ip-address  <=10.7.3
+Severity: high
+ip-address has XSS in Address6 HTML-emitting methods - https://github.com/advisories/GHSA-v2v4-37r5-5v8g
+ip-address: Address4 decodes leading-zero octets as decimal while resolvers decode them as octal, allowing SSRF and trust-boundary bypass - https://github.com/advisories/GHSA-mwp4-54f8-5fhr
+ip-address: Address6.isLinkLocal() recognizes fe80::/64 rather than fe80::/10, allowing SSRF and trust-boundary bypass to on-link hosts - https://github.com/advisories/GHSA-rpw4-54j3-4h4q
+ip-address: isInSubnet() and isHostInSubnet() compare addresses of different families as if they shared an address space, allowing an allowlist check to admit an address outside its range - https://github.com/advisories/GHSA-j6r3-76f7-8jcv
+ip-address: Address6 builds a parse diagnostic proportional to the input with no length bound, allowing a single long string to stall or crash the process - https://github.com/advisories/GHSA-h3mg-xc3c-68pw
+ip-address: Address6 matches a zone identifier in quadratic time ahead of its length limit, allowing a single long string to stall the process - https://github.com/advisories/GHSA-rxp7-6hxx-x8q5
+fix available via `npm audit fix`
+node_modules/ip-address
+
+jws  <3.2.3
+Severity: high
+auth0/node-jws Improperly Verifies HMAC Signature - https://github.com/advisories/GHSA-869p-cjfg-cm3x
+fix available via `npm audit fix`
+node_modules/jws
+
+mongoose  7.0.0 - 7.8.12
+Severity: critical
+Mongoose's Improper Sanitization of $nor in sanitizeFilter May Allow NoSQL Injection - https://github.com/advisories/GHSA-wpg9-53fq-2r8h
+Mongoose: Prototype pollution in mongoose update casting via __proto__-prefixed dotted path (Schema._getSchema/path getter) - https://github.com/advisories/GHSA-664h-wqgq-64gw
+Mongoose: Connection-level sanitizeFilter not applied - https://github.com/advisories/GHSA-gg4r-jv3p-qx3c
+Mongoose: sanitizeFilter not applied on countDocuments - https://github.com/advisories/GHSA-pcrw-h46h-c93h
+Mongoose: Discriminator key values matching inherited properties (e.g. __t: 'constructor') bypass schema casting and can poison collections - https://github.com/advisories/GHSA-wr5m-5jph-8m96
+Mongoose walks into inherited properties when hydrating, setting, and merging, allowing overwrites of built-in functions (denial of service) and shared schema state - https://github.com/advisories/GHSA-8332-j7wj-wjw4
+Mongoose: Prototype pollution via Schema.prototype.virtual() - https://github.com/advisories/GHSA-6972-9mcm-vhwj
+fix available via `npm audit fix`
+node_modules/mongoose
+
+path-to-regexp  <0.1.13
+Severity: high
+path-to-regexp vulnerable to Regular Expression Denial of Service via multiple route parameters - https://github.com/advisories/GHSA-37ch-88jc-xwx2
+fix available via `npm audit fix`
+node_modules/path-to-regexp
+
+proxy-addr  1.1.0 - 2.0.7
+Severity: critical
+proxy-addr vulnerable to IP spoofing via IPv4-mapped IPv6 trust subnet - https://github.com/advisories/GHSA-jqcg-44mw-7w3h
+fix available via `npm audit fix`
+node_modules/proxy-addr
+
+qs  <=6.16.0
+Severity: moderate
+qs's arrayLimit bypass in comma parsing allows denial of service - https://github.com/advisories/GHSA-w7fw-mjwx-w883
+qs's arrayLimit bypass in its bracket notation allows DoS via memory exhaustion - https://github.com/advisories/GHSA-6rw7-vpxm-498p
+qs has a remotely triggerable DoS: qs.stringify crashes with TypeError on null/undefined entries in comma-format arrays when encodeValuesOnly is set - https://github.com/advisories/GHSA-q8mj-m7cp-5q26
+qs: Denial of Service via Attacker Controlled isBuffer - https://github.com/advisories/GHSA-4mjr-xmp4-gh2g
+qs : qs.stringify with arrayFormat 'comma' throws an uncaught TypeError on array elements carrying a non-callable own toString (DoS) - https://github.com/advisories/GHSA-6pq8-jhm2-2vcw
+fix available via `npm audit fix`
+node_modules/qs
+
+8 vulnerabilities (1 moderate, 5 high, 2 critical)
+
+To address all issues, run:
+  npm audit fix

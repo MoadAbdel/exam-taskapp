@@ -7,3 +7,5 @@ coverage/
 logs/
 .vercel
 docs/api/
+.claude/
+!.env.docker.example

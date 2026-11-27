@@ -1,0 +1,42 @@
+# Environnement conteneurise (qualification locale) : MongoDB + API + frontend.
+# Lancement : cp .env.docker.example .env.docker && docker compose up --build -d
+# Application : http://localhost:8080
+services:
+  mongo:
+    image: mongo:8
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', 'db.adminCommand("ping").ok']
+      interval: 10s
+      retries: 10
+    # Pas de port publie : la base n'est joignable que depuis le reseau interne.
+
+  api:
+    build: ./backend
+    image: ghcr.io/moadabdel/exam-taskapp-api:local
+    restart: unless-stopped
+    env_file: .env.docker
+    environment:
+      MONGO_URI: mongodb://mongo:27017/taskapp_preprod
+      APP_ENV: preprod-docker
+    depends_on:
+      mongo:
+        condition: service_healthy
+    volumes:
+      - api-logs:/app/logs
+
+  web:
+    build: ./frontend
+    image: ghcr.io/moadabdel/exam-taskapp-web:local
+    restart: unless-stopped
+    ports:
+      - '8080:8080'
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  mongo-data:
+  api-logs:
