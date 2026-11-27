@@ -73,6 +73,15 @@ La pile Docker inclut Prometheus et Grafana, configures au demarrage (aucun regl
   latence p95 > 500 ms, memoire > 300 Mo, force brute, IP bloquee, jetons falsifies.
 - Verification : `bash scripts/check-monitoring.sh`.
 
+### Grafana Cloud (production et pre-production en ligne)
+
+- Sondes Synthetic Monitoring depuis Paris et Francfort, toutes les 5 minutes (API + base, et site web).
+- Logs et evenements d'audit envoyes dans Loki par l'API (`LOKI_URL`, `LOKI_USER`, `LOKI_TOKEN`, droit `logs:write`).
+- Un tableau de bord par environnement et 6 alertes : service indisponible, erreurs 5xx > 5 %, latence p95 > 500 ms,
+  force brute, jetons falsifies, certificat expirant dans moins de 14 jours.
+- Recreation : `GRAFANA_URL=... GRAFANA_SA_TOKEN=... [ALERT_EMAIL=...] node monitoring/grafana-cloud/setup.mjs`
+  (les sondes se creent dans Testing & synthetics).
+
 ## Audit
 
 Les evenements de securite sont enregistres dans la collection `auditlogs` (90 jours) et dans les logs.

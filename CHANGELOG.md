@@ -11,6 +11,8 @@ Les versions sont listees de la plus recente a la plus ancienne. Chaque entree c
   par lots, apres la reponse (`waitUntil`) : aucune attente pour l'utilisateur. Une panne de Loki ne bloque rien.
 - Journal d'acces : ajout du modele de route (`route`).
 - 4 tests du transport Loki.
+- Grafana Cloud : sondes Paris et Francfort, un tableau de bord par environnement, 6 alertes
+  (`monitoring/grafana-cloud/setup.mjs`).
 
 ## [2.2.0] - 2026-11-27
 
