@@ -60,10 +60,11 @@ jobs:
         with:
           context: backend
           push: ${{ github.event_name == 'push' }}
-          tags: ghcr.io/moadabdel/exam-taskapp-api:${{ github.ref_name }},ghcr.io/moadabdel/exam-taskapp-api:${{ github.sha }}
+          # Tag de branche (develop/main) seulement sur push : sur une PR, ref_name vaut "N/merge" (tag invalide).
+          tags: ghcr.io/moadabdel/exam-taskapp-api:${{ github.sha }}${{ github.event_name == 'push' && format(',ghcr.io/moadabdel/exam-taskapp-api:{0}', github.ref_name) || '' }}
       - name: Build (et push sur main/develop) de l'image frontend
         uses: docker/build-push-action@v6
         with:
           context: frontend
           push: ${{ github.event_name == 'push' }}
-          tags: ghcr.io/moadabdel/exam-taskapp-web:${{ github.ref_name }},ghcr.io/moadabdel/exam-taskapp-web:${{ github.sha }}
+          tags: ghcr.io/moadabdel/exam-taskapp-web:${{ github.sha }}${{ github.event_name == 'push' && format(',ghcr.io/moadabdel/exam-taskapp-web:{0}', github.ref_name) || '' }}
