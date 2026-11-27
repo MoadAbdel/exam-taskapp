@@ -95,7 +95,7 @@ describe('RGPD', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('mot de passe');
     await userEvent.type(screen.getByLabelText('Mot de passe'), 'motdepasse1');
     await userEvent.click(screen.getByRole('button', { name: 'Supprimer definitivement' }));
-    expect(await screen.findByRole('heading', { name: 'Inscription' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Connexion' })).toBeInTheDocument();
     expect(api.delete).toHaveBeenCalledWith('/account', { data: { password: 'motdepasse1' } });
   });
 });

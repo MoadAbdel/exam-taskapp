@@ -1,13 +1,12 @@
 /** Mon compte : export des donnees et suppression du compte (droits RGPD). Route protegee. */
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import api, { errorMessage } from '../api';
 import Alert from '../components/Alert';
 import { useAuth } from '../context/AuthContext';
 
 export default function Account() {
   const { user, setUser } = useAuth();
-  const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
@@ -19,8 +18,7 @@ export default function Account() {
     }
     try {
       await api.delete('/account', { data: { password } });
-      navigate('/register', { replace: true });
-      setUser(null);
+      setUser(null); // la route protegee renvoie alors a la connexion
     } catch (err) {
       setError(errorMessage(err));
     }
