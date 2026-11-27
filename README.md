@@ -13,7 +13,7 @@ Application de gestion de taches : frontend React (Vite), API Express, base Mong
 ```
 Navigateur --HTTPS--> Vercel (CDN, region Paris cdg1)
                        |-- /*      -> service frontend (fichiers statiques Vite)
-                       '-- /api/*  -> service backend (fonction Express, Node 22)
+                       '-- /api/*  -> service backend (fonction Express, Node 26)
                                         '--> MongoDB Atlas (Paris) : base taskapp_prod / taskapp_preprod
 ```
 
