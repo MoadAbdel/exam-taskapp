@@ -32,7 +32,7 @@ jobs:
           gpg --batch --yes --pinentry-mode loopback --passphrase "$BACKUP_PASSPHRASE" \
               --symmetric --cipher-algo AES256 taskapp_prod.archive.gz
           ls -l taskapp_prod.archive.gz.gpg | tee -a "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sauvegarde-prod-${{ github.run_id }}
           path: taskapp_prod.archive.gz.gpg
