@@ -56,14 +56,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build (et push sur main/develop) de l'image API
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: backend
           push: ${{ github.event_name == 'push' }}
           # Tag de branche (develop/main) seulement sur push : sur une PR, ref_name vaut "N/merge" (tag invalide).
           tags: ghcr.io/moadabdel/exam-taskapp-api:${{ github.sha }}${{ github.event_name == 'push' && format(',ghcr.io/moadabdel/exam-taskapp-api:{0}', github.ref_name) || '' }}
       - name: Build (et push sur main/develop) de l'image frontend
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: frontend
           push: ${{ github.event_name == 'push' }}
