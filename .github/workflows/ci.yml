@@ -1,9 +1,10 @@
 name: CI
-# Integration continue : a chaque pull request, et appelee par deploy.yml avant chaque deploiement.
+# Integration continue : a chaque pull request et a chaque push sur develop (preprod) et main (production).
 # Qualite (lint), tests + couverture, audit des dependances, build, images Docker (poussees sur GHCR).
 on:
   pull_request:
-  workflow_call:
+  push:
+    branches: [main, develop]
 
 permissions:
   contents: read

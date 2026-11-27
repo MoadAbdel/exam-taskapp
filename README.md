@@ -49,8 +49,10 @@ Specification de l'API : [`docs/openapi.yaml`](docs/openapi.yaml). Journal des e
 
 ## CI/CD
 
-- `ci.yml` : lint, tests avec seuil de couverture, `npm audit`, build, images Docker (GHCR).
-- `deploy.yml` : push sur `develop` -> pre-production, push sur `main` -> production. CI, deploiement Vercel, test de fumee.
+- `ci.yml` (chaque push et PR) : lint, tests avec seuil de couverture, `npm audit`, build, images Docker (GHCR).
+- Deploiement continu par l'integration Git de Vercel : push sur `develop` -> projet `exam-taskapp-preprod`,
+  push sur `main` -> projet `exam-taskapp`. Chaque projet ignore les autres branches.
+- `deploy.yml` : des que Vercel annonce un deploiement reussi, test de fumee de bout en bout sur l'URL publique.
 - `uptime.yml` : sonde des deux environnements toutes les 15 minutes, alerte par e-mail en cas d'echec.
 - `backup.yml` : sauvegarde quotidienne chiffree de la base de production.
 
