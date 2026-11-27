@@ -167,7 +167,9 @@ describe('taches', () => {
   });
 
   test('erreur serveur au chargement : message visible', async () => {
-    api.get.mockResolvedValueOnce({ data: { user } }).mockRejectedValueOnce(apiError(500, 'Erreur interne du serveur.'));
+    api.get
+      .mockResolvedValueOnce({ data: { user } })
+      .mockRejectedValueOnce(apiError(500, 'Erreur interne du serveur.'));
     render(<App />);
     expect(await screen.findByRole('alert')).toHaveTextContent('Erreur interne');
   });

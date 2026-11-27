@@ -1,9 +1,21 @@
 # Journal des evolutions
 
 Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions : [SemVer](https://semver.org/lang/fr/).
-Les versions sont listees de la plus recente a la plus ancienne. Chaque entree cite le commit qui la porte.
+Les versions sont listees de la plus recente a la plus ancienne. Chaque version liste ses commits (du plus recent au plus ancien) et porte un tag Git `vX.Y.Z`.
+
+## [2.5.0] - 2026-11-27
+
+### Mise en conformite
+
+- Interface formatee avec Prettier, controle ajoute a la CI.
+- Test de restauration automatique (`restore-test.yml`) : derniere sauvegarde rechargee dans une base jetable.
+- Environnement conteneurise en ligne sur Vercel (image construite depuis `backend/Dockerfile`).
+- Branche `main` protegee : pull request et CI verte obligatoires.
+- Versions alignees (API, interface, OpenAPI) et tags Git par version.
 
 ## [2.4.0] - 2026-11-27
+
+Commits : 63432af, f8782f4, 15d1b27, 9e528b4, 04cf060, a0bb700.
 
 ### Conformite RGPD
 
@@ -14,7 +26,10 @@ Les versions sont listees de la plus recente a la plus ancienne. Chaque entree c
   dans le rapport d'audit (publie dans les journaux CI d'un depot public), messages d'erreur retires du rapport.
 - Cookie de session strictement necessaire : pas de bandeau de consentement. Aucun e-mail collecte : pas d'opt-in.
 - Sauvegardes chiffrees deplacees des artefacts GitHub (depot public) vers un stockage Vercel Blob prive.
+
 ## [2.3.0] - 2026-11-27
+
+Commits : a47931d, 7410dd3.
 
 ### Ajouts (E25 et E26)
 
@@ -26,6 +41,8 @@ Les versions sont listees de la plus recente a la plus ancienne. Chaque entree c
   (`monitoring/grafana-cloud/setup.mjs`).
 
 ## [2.2.0] - 2026-11-27
+
+Commits : fbb65a7.
 
 ### Ajouts (E26 : supervision)
 
@@ -44,6 +61,8 @@ Les versions sont listees de la plus recente a la plus ancienne. Chaque entree c
 
 ## [2.1.0] - 2026-11-27
 
+Commits : 168e611, 84eac1b.
+
 ### Ajouts (E25 : outils d'audit)
 
 - Piste d'audit persistante : collection MongoDB `auditlogs`, conservee 90 jours (index TTL), une par environnement.
@@ -60,6 +79,8 @@ Les versions sont listees de la plus recente a la plus ancienne. Chaque entree c
   build-push-action 7) et nginx 1.31. Dependabot vise `develop` et regroupe ses mises a jour.
 
 ## [2.0.0] - 2026-11-27
+
+Commits : a100145, 47ecf6d, a7a3a9e, 4d71be8, e0f7d87, 80f5534, 877260a, 559adc5, eaaf45f, 1bbc4a3, b7be6b1, f1d3041.
 
 Mise en production : correction des bugs (E27) et des failles (E28), documentation (E29),
 conteneurisation, CI/CD, journalisation et supervision (E21 a E26).
@@ -101,10 +122,10 @@ conteneurisation, CI/CD, journalisation et supervision (E21 a E26).
 | B12 | Suppression basee sur un etat perime (`tasks.filter` dans une closure) | Mises a jour fonctionnelles de l'etat | b7be6b1 |
 | B13 | Pas de lien Inscription, deconnexion sans redirection, inscription sans connexion | Liens dans l'en-tete, redirection, connexion automatique apres inscription | b7be6b1 |
 | B14 | URL de l'API en dur (`http://localhost:5000`) : ne marche pas en production | URL relative `/api` (meme origine) | b7be6b1 |
+| B15 | Mise en page : `100vw` cree un scroll horizontal, `<header>` imbrique, `lang="en"`, annee figee 2025, options Mongoose obsoletes | CSS corrige, HTML semantique, `lang="fr"`, annee dynamique, options retirees | b7be6b1, f1d3041 |
 | B16 | Trouve par le test navigateur : React reutilise le formulaire entre Connexion et Inscription, l'erreur et la saisie d'une page restent sur l'autre | Cle (`key`) differente par page | 80f5534 |
 | B17 | Trouve par le test navigateur : la case "terminee" ne reagit qu'apres la reponse serveur | Mise a jour optimiste avec retour arriere en cas d'echec | e0f7d87 |
 | B18 | Le message d'erreur d'ajout reste affiche apres correction | Effacement a la saisie | 4d71be8 |
-| B15 | Mise en page : `100vw` cree un scroll horizontal, `<header>` imbrique, `lang="en"`, annee figee 2025, options Mongoose obsoletes | CSS corrige, HTML semantique, `lang="fr"`, annee dynamique, options retirees | b7be6b1, f1d3041 |
 
 ### Ajouts
 

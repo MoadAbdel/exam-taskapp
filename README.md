@@ -6,6 +6,7 @@ Application de gestion de taches : frontend React (Vite), API Express, base Mong
 | ------------- | --- | ------- |
 | Production | https://exam-taskapp.vercel.app | `main` |
 | Pre-production | https://exam-taskapp-preprod.vercel.app | `develop` |
+| Conteneurisee (cloud) | https://exam-taskapp-conteneur.vercel.app | `scripts/deploy-container.sh` |
 | Docker local | http://localhost:8080 | toutes |
 
 ## Architecture

@@ -15,7 +15,9 @@ export default function Privacy() {
 
       <h2>Donnees traitees</h2>
       <ul>
-        <li>Compte : nom d&apos;utilisateur (un pseudonyme suffit) et mot de passe, stocke uniquement sous forme de hash.</li>
+        <li>
+          Compte : nom d&apos;utilisateur (un pseudonyme suffit) et mot de passe, stocke uniquement sous forme de hash.
+        </li>
         <li>Contenu : vos taches.</li>
         <li>Securite : adresse IP, date et type d&apos;evenement (connexion, echec, suppression).</li>
       </ul>

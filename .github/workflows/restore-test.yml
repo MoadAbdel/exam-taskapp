@@ -1,0 +1,50 @@
+name: Test de restauration
+# Une sauvegarde n'est fiable que si on sait la relire. Chaque semaine (et a la demande) :
+# derniere sauvegarde du stockage prive -> dechiffrement -> mongorestore dans une base jetable -> controle.
+on:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  restore:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:8
+        ports: ['27017:27017']
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ping:1})'" --health-interval 5s --health-retries 20
+    env:
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+      BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: 26 }
+      - name: Installer les outils
+        run: |
+          wget -q https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2404-x86_64-100.13.0.tgz -O "$RUNNER_TEMP/tools.tgz"
+          tar -xzf "$RUNNER_TEMP/tools.tgz" -C "$RUNNER_TEMP"
+          echo "$(ls -d "$RUNNER_TEMP"/mongodb-database-tools-*/)bin" >> "$GITHUB_PATH"
+          npm install --no-save --no-package-lock --ignore-scripts @vercel/blob@2.9.0
+      - name: Recuperer et dechiffrer la derniere sauvegarde
+        run: |
+          node scripts/backup-store.mjs download dump.gpg
+          gpg --batch --quiet --pinentry-mode loopback --passphrase "$BACKUP_PASSPHRASE" -d dump.gpg > dump.archive.gz
+      - name: Restaurer et controler
+        run: |
+          mongorestore --uri "mongodb://localhost:27017" --gzip --archive=dump.archive.gz 2> restore.log
+          tail -n 1 restore.log | tee -a "$GITHUB_STEP_SUMMARY"
+          result=$(docker exec "${{ job.services.mongo.id }}" mongosh --quiet taskapp_prod --eval \
+            'print("users=" + db.users.countDocuments() + " tasks=" + db.tasks.countDocuments() + " index=" + db.users.getIndexes().length)')
+          echo "Base restauree : $result" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "$result" | grep -qE "users=[1-9]" || { echo "::error::Aucun utilisateur restaure"; exit 1; }
+          rm -f dump.gpg dump.archive.gz
