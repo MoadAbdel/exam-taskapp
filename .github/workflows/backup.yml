@@ -1,8 +1,11 @@
 name: Sauvegarde
 # Sauvegarde quotidienne de la base de production (l'offre Atlas gratuite n'a pas de sauvegarde automatique).
-# mongodump -> archive compressee -> chiffrement AES-256 (gpg) -> artefact GitHub conserve 30 jours.
+# mongodump -> archive compressee -> chiffrement AES-256 (gpg) -> stockage Vercel Blob PRIVE (Paris).
+# Rien n'est publie dans les artefacts GitHub : le depot est public.
+# Chaque envoi est relu et compare ; les sauvegardes de plus de 30 jours sont supprimees.
 # Restauration :
-#   gpg -d taskapp_prod.archive.gz.gpg > dump.archive.gz
+#   BLOB_READ_WRITE_TOKEN=... node scripts/backup-store.mjs download dump.gpg
+#   gpg -d dump.gpg > dump.archive.gz
 #   mongorestore --uri "$MONGO_URI" --gzip --archive=dump.archive.gz --drop
 on:
   schedule:
@@ -19,21 +22,27 @@ jobs:
     env:
       MONGO_URI: ${{ secrets.MONGO_URI_PROD }}
       BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+      BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
     steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: 26 }
       - name: Verifier les secrets
-        run: test -n "$MONGO_URI" && test -n "$BACKUP_PASSPHRASE" || { echo "::error::Secret manquant"; exit 1; }
-      - name: Installer les outils MongoDB
         run: |
-          wget -q https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2404-x86_64-100.13.0.tgz -O tools.tgz
-          tar -xzf tools.tgz && echo "$PWD/$(ls -d mongodb-database-tools-*/)bin" >> "$GITHUB_PATH"
+          test -n "$MONGO_URI" && test -n "$BACKUP_PASSPHRASE" && test -n "$BLOB_READ_WRITE_TOKEN" ||
+            { echo "::error::Secret manquant"; exit 1; }
+      - name: Installer les outils MongoDB et le client de stockage
+        run: |
+          wget -q https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2404-x86_64-100.13.0.tgz -O "$RUNNER_TEMP/tools.tgz"
+          tar -xzf "$RUNNER_TEMP/tools.tgz" -C "$RUNNER_TEMP"
+          echo "$(ls -d "$RUNNER_TEMP"/mongodb-database-tools-*/)bin" >> "$GITHUB_PATH"
+          npm install --no-save --no-package-lock --ignore-scripts @vercel/blob@2.9.0
       - name: Export et chiffrement
         run: |
           mongodump --uri "$MONGO_URI" --gzip --archive=taskapp_prod.archive.gz
           gpg --batch --yes --pinentry-mode loopback --passphrase "$BACKUP_PASSPHRASE" \
               --symmetric --cipher-algo AES256 taskapp_prod.archive.gz
-          ls -l taskapp_prod.archive.gz.gpg | tee -a "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v7
-        with:
-          name: sauvegarde-prod-${{ github.run_id }}
-          path: taskapp_prod.archive.gz.gpg
-          retention-days: 30
+          rm taskapp_prod.archive.gz
+      - name: Envoi vers le stockage prive
+        shell: bash
+        run: node scripts/backup-store.mjs upload taskapp_prod.archive.gz.gpg | tee -a "$GITHUB_STEP_SUMMARY"
