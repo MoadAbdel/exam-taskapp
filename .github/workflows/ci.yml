@@ -1,0 +1,68 @@
+name: CI
+# Integration continue : a chaque pull request, et appelee par deploy.yml avant chaque deploiement.
+# Qualite (lint), tests + couverture, audit des dependances, build, images Docker (poussees sur GHCR).
+on:
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22, cache: npm, cache-dependency-path: backend/package-lock.json }
+      - run: npm ci --ignore-scripts
+      - run: npm run lint
+      - run: npx prettier --check .
+      - run: npm run test:cov # tests d'integration API + MongoDB en memoire, seuil 70 %
+      - run: npm audit --omit=dev --audit-level=high
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22, cache: npm, cache-dependency-path: frontend/package-lock.json }
+      - run: npm ci --ignore-scripts
+      - run: npm run lint
+      - run: npm run test:cov # seuil 50 % de lignes
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npm run build
+
+  docker:
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+      - name: Connexion au registre GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build (et push sur main/develop) de l'image API
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: ${{ github.event_name == 'push' }}
+          tags: ghcr.io/moadabdel/exam-taskapp-api:${{ github.ref_name }},ghcr.io/moadabdel/exam-taskapp-api:${{ github.sha }}
+      - name: Build (et push sur main/develop) de l'image frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          push: ${{ github.event_name == 'push' }}
+          tags: ghcr.io/moadabdel/exam-taskapp-web:${{ github.ref_name }},ghcr.io/moadabdel/exam-taskapp-web:${{ github.sha }}

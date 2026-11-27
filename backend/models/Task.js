@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 
 /**
  * @typedef {object} Task
- * @property {import('mongoose').Types.ObjectId} user Proprietaire de la tache.
+ * @property {ObjectId} user Proprietaire de la tache.
  * @property {string} title Titre (1 a 200 caracteres).
  * @property {string} [description] Description (1000 caracteres maximum).
  * @property {boolean} isCompleted Tache terminee ou non.

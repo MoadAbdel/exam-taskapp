@@ -6,6 +6,7 @@ build/
 coverage/
 logs/
 .vercel
-docs/api/
 .claude/
 !.env.docker.example
+.vercel
+.env*

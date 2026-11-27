@@ -13,7 +13,7 @@ const COOKIE_NAME = 'token';
  * - httpOnly : JavaScript ne peut pas lire le jeton (protection XSS).
  * - secure : envoye seulement en HTTPS en production.
  * - sameSite strict : non envoye par un site tiers (protection CSRF).
- * @type {import('express').CookieOptions}
+ * @type {object}
  */
 const cookieOptions = {
   httpOnly: true,
@@ -38,7 +38,7 @@ function signToken(userId) {
 /**
  * Middleware : refuse la requete (401) sans jeton valide.
  * En cas de succes, `req.user.id` contient l'identifiant de l'utilisateur.
- * @type {import('express').RequestHandler}
+ * @type {function}
  */
 function auth(req, res, next) {
   const token = req.cookies?.[COOKIE_NAME];

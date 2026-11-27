@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: routes/auth.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: routes/auth.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @module routes/auth
+ * @description Inscription, connexion, deconnexion et profil courant.
+ * Base : /api/auth
+ */
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const rateLimit = require('express-rate-limit');
+const User = require('../models/User');
+const validate = require('../middleware/validate');
+const schemas = require('../validators/schemas');
+const { auth, signToken, cookieOptions, COOKIE_NAME } = require('../middleware/auth');
+const logger = require('../config/logger');
+
+const router = express.Router();
+
+// Hash calcule une fois : compare() s'execute aussi quand l'utilisateur n'existe pas,
+// la duree de reponse ne revele donc pas si un compte existe.
+const DUMMY_HASH = bcrypt.hashSync('compte-inexistant', 12);
+
+// Limite les essais de mot de passe : 10 tentatives par 15 minutes et par IP.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  message: { msg: 'Trop de tentatives. Reessayez dans 15 minutes.' },
+});
+
+/**
+ * POST /api/auth/register
+ * @summary Cree un compte puis ouvre la session.
+ * @param {{username: string, password: string}} req.body
+ * @returns {201} `{ user: { _id, username } }` et cookie de session httpOnly.
+ * @returns {400} Donnees invalides (message explicite).
+ * @returns {409} Nom d'utilisateur deja pris.
+ */
+router.post('/register', authLimiter, validate(schemas.register), async (req, res) => {
+  const { username, password } = req.body;
+
+  const exists = await User.exists({ username });
+  if (exists) {
+    return res.status(409).json({ msg: "Ce nom d'utilisateur est deja pris." });
+  }
+
+  const hash = await bcrypt.hash(password, 12);
+  const user = await User.create({ username, password: hash });
+  logger.info('audit:inscription', { userId: user.id, requestId: req.id });
+
+  res.cookie(COOKIE_NAME, signToken(user.id), cookieOptions);
+  return res.status(201).json({ user: { _id: user.id, username: user.username } });
+});
+
+/**
+ * POST /api/auth/login
+ * @summary Verifie les identifiants et ouvre la session.
+ * @param {{username: string, password: string}} req.body
+ * @returns {200} `{ user: { _id, username } }` et cookie de session httpOnly.
+ * @returns {401} Identifiants incorrects (message volontairement identique dans les deux cas).
+ * @returns {429} Trop de tentatives.
+ */
+router.post('/login', authLimiter, validate(schemas.login), async (req, res) => {
+  const { username, password } = req.body;
+
+  const user = await User.findOne({ username }).select('+password');
+  const isMatch = await bcrypt.compare(password, user ? user.password : DUMMY_HASH);
+
+  if (!user || !isMatch) {
+    logger.warn('audit:connexion_echec', { username, ip: req.ip, requestId: req.id });
+    return res.status(401).json({ msg: "Nom d'utilisateur ou mot de passe incorrect." });
+  }
+
+  logger.info('audit:connexion', { userId: user.id, requestId: req.id });
+  res.cookie(COOKIE_NAME, signToken(user.id), cookieOptions);
+  return res.json({ user: { _id: user.id, username: user.username } });
+});
+
+/**
+ * POST /api/auth/logout
+ * @summary Ferme la session (supprime le cookie).
+ * @returns {204}
+ */
+router.post('/logout', (req, res) => {
+  res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: undefined });
+  return res.status(204).end();
+});
+
+/**
+ * GET /api/auth/me
+ * @summary Renvoie l'utilisateur connecte. Sert au frontend a savoir si la session est active.
+ * @returns {200} `{ user: { _id, username } }`
+ * @returns {401} Pas de session valide.
+ */
+router.get('/me', auth, async (req, res) => {
+  const user = await User.findById(req.user.id);
+  if (!user) return res.status(401).json({ msg: 'Compte introuvable.' });
+  return res.json({ user: { _id: user.id, username: user.username } });
+});
+
+module.exports = router;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-app.html">app</a></li><li><a href="module-config_db.html">config/db</a></li><li><a href="module-config_env.html">config/env</a></li><li><a href="module-config_logger.html">config/logger</a></li><li><a href="module-middleware_auth.html">middleware/auth</a></li><li><a href="module-middleware_requestLogger.html">middleware/requestLogger</a></li><li><a href="module-middleware_validate.html">middleware/validate</a></li><li><a href="module-models_Task.html">models/Task</a></li><li><a href="module-models_User.html">models/User</a></li><li><a href="module-routes_auth.html">routes/auth</a></li><li><a href="module-routes_tasks.html">routes/tasks</a></li><li><a href="module-server.html">server</a></li><li><a href="module-validators_schemas.html">validators/schemas</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Fri Nov 27 2026 10:50:23 GMT+0100 (heure normale d’Europe centrale)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+name: Supervision
+# Sonde externe toutes les 15 minutes sur les deux environnements.
+# Alerte : si une sonde echoue, le workflow echoue et GitHub envoie un e-mail au proprietaire du depot.
+# Seuils : API ou base indisponible (HTTP != 200 ou db != up), latence > 2 s, frontend indisponible.
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        env:
+          - { name: production, url: 'https://exam-taskapp.vercel.app' }
+          - { name: preprod, url: 'https://exam-taskapp-preprod.vercel.app' }
+    steps:
+      - name: Sonde ${{ matrix.env.name }}
+        run: |
+          set -u
+          out=$(curl -s -o body.json -w '%{http_code} %{time_total}' --max-time 15 "${{ matrix.env.url }}/api/health")
+          code=${out% *}; time=${out#* }
+          echo "API ${{ matrix.env.name }} : HTTP $code en ${time}s : $(cat body.json)" | tee -a "$GITHUB_STEP_SUMMARY"
+          [ "$code" = "200" ] || { echo "::error::API ${{ matrix.env.name }} indisponible (HTTP $code)"; exit 1; }
+          grep -q '"db":"up"' body.json || { echo "::error::Base ${{ matrix.env.name }} injoignable"; exit 1; }
+          awk "BEGIN{exit !($time < 2)}" || { echo "::error::Latence ${{ matrix.env.name }} trop haute : ${time}s"; exit 1; }
+          front=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "${{ matrix.env.url }}/")
+          [ "$front" = "200" ] || { echo "::error::Frontend ${{ matrix.env.name }} indisponible (HTTP $front)"; exit 1; }

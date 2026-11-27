@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Module: validators/schemas</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Module: validators/schemas</h1>
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        
+            
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description"><p>Schemas Joi des donnees entrantes. Tout champ inconnu est refuse.</p></div>
+        
+
+        
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="validators_schemas.js.html">validators/schemas.js</a>, <a href="validators_schemas.js.html#line1">line 1</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        
+            
+<h4 class="name" id="~createTask"><span class="type-signature">(inner, constant) </span>createTask<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    <p>Creation de tache.</p>
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="validators_schemas.js.html">validators/schemas.js</a>, <a href="validators_schemas.js.html#line66">line 66</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~login"><span class="type-signature">(inner, constant) </span>login<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    <p>Connexion : on verifie seulement la forme (des chaines), pas la politique de mot de passe.</p>
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="validators_schemas.js.html">validators/schemas.js</a>, <a href="validators_schemas.js.html#line43">line 43</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~objectIdParam"><span class="type-signature">(inner, constant) </span>objectIdParam<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    <p>Identifiant MongoDB (24 caracteres hexadecimaux).</p>
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="validators_schemas.js.html">validators/schemas.js</a>, <a href="validators_schemas.js.html#line74">line 74</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~register"><span class="type-signature">(inner, constant) </span>register<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    <p>Inscription : mot de passe de 8 a 72 caracteres (72 = limite de bcrypt) avec lettre et chiffre.</p>
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="validators_schemas.js.html">validators/schemas.js</a>, <a href="validators_schemas.js.html#line25">line 25</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="~updateTask"><span class="type-signature">(inner, constant) </span>updateTask<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    <p>Mise a jour partielle : au moins un champ.</p>
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="validators_schemas.js.html">validators/schemas.js</a>, <a href="validators_schemas.js.html#line69">line 69</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-app.html">app</a></li><li><a href="module-config_db.html">config/db</a></li><li><a href="module-config_env.html">config/env</a></li><li><a href="module-config_logger.html">config/logger</a></li><li><a href="module-middleware_auth.html">middleware/auth</a></li><li><a href="module-middleware_requestLogger.html">middleware/requestLogger</a></li><li><a href="module-middleware_validate.html">middleware/validate</a></li><li><a href="module-models_Task.html">models/Task</a></li><li><a href="module-models_User.html">models/User</a></li><li><a href="module-routes_auth.html">routes/auth</a></li><li><a href="module-routes_tasks.html">routes/tasks</a></li><li><a href="module-server.html">server</a></li><li><a href="module-validators_schemas.html">validators/schemas</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Fri Nov 27 2026 10:50:23 GMT+0100 (heure normale d’Europe centrale)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

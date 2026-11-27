@@ -110,10 +110,7 @@ describe('authentification', () => {
   });
 
   test('JSON invalide : 400 et non 500', async () => {
-    const res = await request(app)
-      .post('/api/auth/login')
-      .set('Content-Type', 'application/json')
-      .send('{"username":');
+    const res = await request(app).post('/api/auth/login').set('Content-Type', 'application/json').send('{"username":');
     assert.equal(res.status, 400);
   });
 });

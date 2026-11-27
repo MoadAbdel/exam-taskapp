@@ -1,0 +1,156 @@
+openapi: 3.1.0
+info:
+  title: API Mes Taches
+  version: 2.0.0
+  description: |
+    API REST JSON de l'application de gestion de taches.
+    Authentification par cookie de session `token` (httpOnly, Secure, SameSite=Strict), pose par
+    `/auth/register` ou `/auth/login`. Les erreurs ont la forme `{ "msg": "..." }`.
+servers:
+  - url: https://exam-taskapp.vercel.app/api
+    description: Production
+  - url: https://exam-taskapp-preprod.vercel.app/api
+    description: Pre-production
+  - url: http://localhost:8080/api
+    description: Docker local
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+  schemas:
+    Error:
+      type: object
+      properties:
+        msg: { type: string }
+    Credentials:
+      type: object
+      required: [username, password]
+      additionalProperties: false
+      properties:
+        username: { type: string, minLength: 3, maxLength: 30, pattern: '^[a-zA-Z0-9_.-]+$' }
+        password: { type: string, minLength: 8, maxLength: 72, description: 'Au moins une lettre et un chiffre' }
+    User:
+      type: object
+      properties:
+        _id: { type: string }
+        username: { type: string }
+    Task:
+      type: object
+      properties:
+        _id: { type: string }
+        user: { type: string }
+        title: { type: string, maxLength: 200 }
+        description: { type: string, maxLength: 1000 }
+        isCompleted: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+  responses:
+    Unauthorized:
+      description: Pas de session valide
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    BadRequest:
+      description: Donnees invalides
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotFound:
+      description: Ressource introuvable ou appartenant a un autre utilisateur
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+paths:
+  /health:
+    get:
+      summary: Etat de l'API et de la base (sonde de supervision)
+      responses:
+        '200': { description: 'OK : `{ status, db, env, version, uptime }`' }
+        '503': { description: Base injoignable }
+  /auth/register:
+    post:
+      summary: Creer un compte (ouvre la session)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/Credentials' } } }
+      responses:
+        '201':
+          description: Compte cree, cookie `token` pose
+          content: { application/json: { schema: { type: object, properties: { user: { $ref: '#/components/schemas/User' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { description: Nom d'utilisateur deja pris }
+        '429': { description: Trop de tentatives }
+  /auth/login:
+    post:
+      summary: Se connecter
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/Credentials' } } }
+      responses:
+        '200': { description: 'Connecte, cookie `token` pose' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { description: Identifiants incorrects }
+        '429': { description: 'Trop de tentatives (10 echecs / 15 min)' }
+  /auth/logout:
+    post:
+      summary: Se deconnecter (supprime le cookie)
+      responses:
+        '204': { description: Session fermee }
+  /auth/me:
+    get:
+      summary: Utilisateur connecte
+      security: [{ cookieAuth: [] }]
+      responses:
+        '200': { description: 'OK', content: { application/json: { schema: { type: object, properties: { user: { $ref: '#/components/schemas/User' } } } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /tasks:
+    get:
+      summary: Lister mes taches (plus recentes d'abord)
+      security: [{ cookieAuth: [] }]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Task' } } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      summary: Creer une tache
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              additionalProperties: false
+              properties:
+                title: { type: string, minLength: 1, maxLength: 200, description: 'Sans < ni >' }
+                description: { type: string, maxLength: 1000 }
+      responses:
+        '201': { description: Creee, content: { application/json: { schema: { $ref: '#/components/schemas/Task' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /tasks/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, pattern: '^[a-f0-9]{24}$' } }
+    put:
+      summary: Modifier une de mes taches (mise a jour partielle)
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              additionalProperties: false
+              properties:
+                title: { type: string, maxLength: 200 }
+                description: { type: string, maxLength: 1000 }
+                isCompleted: { type: boolean }
+      responses:
+        '200': { description: Modifiee, content: { application/json: { schema: { $ref: '#/components/schemas/Task' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      summary: Supprimer une de mes taches
+      security: [{ cookieAuth: [] }]
+      responses:
+        '200': { description: Supprimee }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }

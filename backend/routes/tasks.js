@@ -28,7 +28,7 @@ router.get('/', async (req, res) => {
 /**
  * POST /api/tasks
  * @summary Cree une tache.
- * @param {{title: string, description?: string}} req.body
+ * @param {{title: string, description: string}} req.body
  * @returns {201} La tache creee.
  * @returns {400} Titre vide, trop long ou contenant du HTML.
  */
@@ -42,7 +42,7 @@ router.post('/', validate(schemas.createTask), async (req, res) => {
  * PUT /api/tasks/:id
  * @summary Modifie une tache de l'utilisateur (mise a jour partielle).
  * @param {string} req.params.id Identifiant de la tache.
- * @param {{title?: string, description?: string, isCompleted?: boolean}} req.body
+ * @param {object} req.body
  * @returns {200} La tache modifiee.
  * @returns {404} Tache inexistante ou appartenant a un autre utilisateur.
  */

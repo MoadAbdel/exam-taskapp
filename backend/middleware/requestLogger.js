@@ -6,7 +6,7 @@
 const { randomUUID } = require('node:crypto');
 const logger = require('../config/logger');
 
-/** @type {import('express').RequestHandler} */
+/** @type {function} */
 function requestLogger(req, res, next) {
   const start = process.hrtime.bigint();
   req.id = req.get('x-vercel-id') || randomUUID();

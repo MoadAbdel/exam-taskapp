@@ -22,7 +22,11 @@ if (env.LOG_TO_FILE) {
 const logger = winston.createLogger({
   level: env.LOG_LEVEL,
   silent: env.NODE_ENV === 'test',
-  format: winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json()),
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.errors({ stack: true }),
+    winston.format.json(),
+  ),
   defaultMeta: { service: 'taskapp-api', env: env.APP_ENV },
   transports,
 });

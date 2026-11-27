@@ -6,9 +6,9 @@
 /**
  * Cree un middleware de validation.
  * La valeur nettoyee (trim, conversion de types) remplace la valeur d'origine.
- * @param {import('joi').Schema} schema Schema Joi.
+ * @param {object} schema Schema Joi.
  * @param {'body'|'params'|'query'} [source='body'] Partie de la requete a valider.
- * @returns {import('express').RequestHandler}
+ * @returns {function}
  * @example router.post('/', validate(schemas.createTask), handler)
  */
 function validate(schema, source = 'body') {

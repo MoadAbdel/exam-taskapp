@@ -45,9 +45,14 @@ app.get('/api/health', async (req, res) => {
   try {
     await connectDB(env.MONGO_URI);
     await mongoose.connection.db.admin().ping();
-    res.set('Cache-Control', 'no-store').json({ status: 'ok', db: 'up', ...base, uptime: Math.round(process.uptime()) });
+    res
+      .set('Cache-Control', 'no-store')
+      .json({ status: 'ok', db: 'up', ...base, uptime: Math.round(process.uptime()) });
   } catch {
-    res.status(503).set('Cache-Control', 'no-store').json({ status: 'degraded', db: 'down', ...base });
+    res
+      .status(503)
+      .set('Cache-Control', 'no-store')
+      .json({ status: 'degraded', db: 'down', ...base });
   }
 });
 

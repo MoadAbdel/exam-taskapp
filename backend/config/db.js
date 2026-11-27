@@ -13,13 +13,13 @@ const logger = require('./logger');
 mongoose.set('sanitizeFilter', true);
 mongoose.set('strictQuery', true);
 
-/** @type {Promise<typeof mongoose> | null} */
+/** @type {?Promise} */
 let connecting = null;
 
 /**
  * Ouvre la connexion (une seule fois) et la renvoie.
  * @param {string} uri Chaine de connexion MongoDB.
- * @returns {Promise<typeof mongoose>}
+ * @returns {Promise<object>}
  */
 function connectDB(uri) {
   if (mongoose.connection.readyState === 1) return Promise.resolve(mongoose);
