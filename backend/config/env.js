@@ -22,6 +22,9 @@ const schema = Joi.object({
   LOG_TO_FILE: Joi.boolean().default(false),
   // Nom de l'environnement affiche par /api/health (preprod, production...).
   APP_ENV: Joi.string().default(Joi.ref('NODE_ENV')),
+  // Endpoint /metrics (Prometheus). Desactive par defaut ; jeton Bearer optionnel pour le proteger.
+  METRICS_ENABLED: Joi.boolean().default(false),
+  METRICS_TOKEN: Joi.string().min(16).allow('').default(''),
 }).unknown(true);
 
 const { value, error } = schema.validate(process.env, { abortEarly: false });

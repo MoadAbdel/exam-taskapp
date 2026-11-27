@@ -181,6 +181,36 @@ describe('taches', () => {
   });
 });
 
+describe('metriques', () => {
+  test('/metrics desactive par defaut (404)', async () => {
+    await request(app).get('/metrics').expect(404);
+  });
+
+  test('/metrics active : format Prometheus, routes par modele, jeton exige', async () => {
+    const env = require('../config/env');
+    env.METRICS_ENABLED = true;
+    env.METRICS_TOKEN = 'jeton-metriques-de-test';
+    try {
+      await request(app).get('/metrics').expect(401);
+      const agent = await signup('metro');
+      const task = (await agent.post('/api/tasks').send({ title: 'mesure' })).body;
+      await agent.delete(`/api/tasks/${task._id}`);
+
+      const res = await request(app).get('/metrics').set('Authorization', 'Bearer jeton-metriques-de-test');
+      assert.equal(res.status, 200);
+      assert.match(res.text, /http_requests_total\{.*route="\/api\/tasks\/:id".*status="200"/);
+      assert.match(res.text, /http_request_duration_seconds_bucket/);
+      assert.match(res.text, /security_events_total\{.*event="inscription"/);
+      assert.match(res.text, /mongodb_up\{.*\} 1/);
+      assert.equal(res.text.includes(task._id), false); // jamais d'identifiant brut dans les etiquettes
+      assert.equal(/route="\/metrics"/.test(res.text), false); // les collectes ne comptent pas comme trafic
+    } finally {
+      env.METRICS_ENABLED = false;
+      env.METRICS_TOKEN = '';
+    }
+  });
+});
+
 describe('audit', () => {
   const AuditLog = () => require('../models/AuditLog');
 

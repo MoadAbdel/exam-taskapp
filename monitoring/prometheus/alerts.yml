@@ -1,0 +1,61 @@
+# Regles d'alerte adaptees a l'application (etat des services, performance, securite).
+groups:
+  - name: disponibilite
+    rules:
+      - alert: ApiIndisponible
+        expr: up{job="api"} == 0
+        for: 1m
+        labels: { severity: critique }
+        annotations:
+          summary: "L'API ne repond plus depuis 1 minute"
+      - alert: BaseInjoignable
+        expr: mongodb_up == 0
+        for: 1m
+        labels: { severity: critique }
+        annotations:
+          summary: "L'API n'a plus de connexion a MongoDB"
+
+  - name: performance
+    rules:
+      - alert: TauxErreurs5xx
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m]))
+            / clamp_min(sum(rate(http_requests_total[5m])), 0.001) > 0.05
+        for: 5m
+        labels: { severity: haute }
+        annotations:
+          summary: 'Plus de 5 % des requetes finissent en erreur serveur'
+      # Connexion et inscription exclues : bcrypt (cout 12) les rend lentes volontairement (anti force brute).
+      - alert: LatenceElevee
+        expr: |
+          histogram_quantile(0.95, sum by (le) (
+            rate(http_request_duration_seconds_bucket{route!~"/api/auth/(login|register)"}[5m])
+          )) > 0.5
+        for: 5m
+        labels: { severity: moyenne }
+        annotations:
+          summary: 'Latence p95 superieure a 500 ms (hors connexion et inscription)'
+      - alert: MemoireElevee
+        expr: process_resident_memory_bytes{job="api"} > 300 * 1024 * 1024
+        for: 10m
+        labels: { severity: moyenne }
+        annotations:
+          summary: "L'API utilise plus de 300 Mo de memoire"
+
+  - name: securite
+    rules:
+      - alert: ForceBrute
+        expr: sum(increase(security_events_total{event="connexion_echec"}[5m])) > 20
+        labels: { severity: haute }
+        annotations:
+          summary: 'Plus de 20 echecs de connexion en 5 minutes'
+      - alert: IpBloquee
+        expr: sum(increase(security_events_total{event="limite_atteinte"}[10m])) > 0
+        labels: { severity: moyenne }
+        annotations:
+          summary: 'Le limiteur a bloque au moins une IP (10 echecs en 15 min)'
+      - alert: JetonsFalsifies
+        expr: sum(increase(security_events_total{event="jeton_invalide"}[10m])) > 5
+        labels: { severity: haute }
+        annotations:
+          summary: 'Plus de 5 jetons falsifies en 10 minutes'

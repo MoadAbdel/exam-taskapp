@@ -57,6 +57,22 @@ Specification de l'API : [`docs/openapi.yaml`](docs/openapi.yaml). Journal des e
 - `backup.yml` : sauvegarde quotidienne chiffree de la base de production.
 - `audit.yml` : rapport d'audit quotidien des deux environnements et `npm audit`, alerte si un seuil est depasse.
 
+## Supervision (Prometheus + Grafana)
+
+La pile Docker inclut Prometheus et Grafana, configures au demarrage (aucun reglage manuel) :
+
+| Outil | URL | Contenu |
+| ----- | --- | ------- |
+| Grafana | http://localhost:3001 (admin / `GF_SECURITY_ADMIN_PASSWORD`) | Tableau de bord "Mes Taches - supervision" |
+| Prometheus | http://localhost:9090/alerts | 8 regles d'alerte et leur etat |
+
+- L'API expose `/metrics` (format Prometheus) seulement si `METRICS_ENABLED=true`, et seulement sur le reseau
+  Docker interne (ni nginx ni Vercel ne publient cette route). Jeton Bearer optionnel : `METRICS_TOKEN`.
+- Metriques : requetes par route et code, latence (p50/p95/p99), evenements de securite, etat MongoDB, memoire.
+- Alertes (`monitoring/prometheus/alerts.yml`) : API ou base indisponible, plus de 5 % d'erreurs 5xx,
+  latence p95 > 500 ms, memoire > 300 Mo, force brute, IP bloquee, jetons falsifies.
+- Verification : `bash scripts/check-monitoring.sh`.
+
 ## Audit
 
 Les evenements de securite sont enregistres dans la collection `auditlogs` (90 jours) et dans les logs.

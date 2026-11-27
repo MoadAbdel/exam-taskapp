@@ -1,0 +1,20 @@
+# Prometheus : collecte les metriques de l'API toutes les 15 s et evalue les regles d'alerte.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    env: preprod-docker
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  # /metrics n'est joignable que sur le reseau Docker interne (port de l'API non publie, non relaye par nginx).
+  - job_name: api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['api:5000']
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
