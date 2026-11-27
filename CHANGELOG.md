@@ -13,6 +13,7 @@ Les versions sont listees de la plus recente a la plus ancienne. Chaque entree c
 - Minimisation : IP tronquees et noms d'utilisateur retires avant envoi a Grafana ; IP tronquees et noms masques
   dans le rapport d'audit (publie dans les journaux CI d'un depot public), messages d'erreur retires du rapport.
 - Cookie de session strictement necessaire : pas de bandeau de consentement. Aucun e-mail collecte : pas d'opt-in.
+- Sauvegardes chiffrees deplacees des artefacts GitHub (depot public) vers un stockage Vercel Blob prive.
 ## [2.3.0] - 2026-11-27
 
 ### Ajouts (E25 et E26)

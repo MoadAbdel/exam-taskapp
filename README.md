@@ -54,7 +54,8 @@ Specification de l'API : [`docs/openapi.yaml`](docs/openapi.yaml). Journal des e
   push sur `main` -> projet `exam-taskapp`. Chaque projet ignore les autres branches.
 - `deploy.yml` : attend que l'URL publique serve le commit pousse (`/api/health`), puis test de fumee de bout en bout.
 - `uptime.yml` : sonde des deux environnements toutes les 15 minutes, alerte par e-mail en cas d'echec.
-- `backup.yml` : sauvegarde quotidienne chiffree de la base de production.
+- `backup.yml` : sauvegarde quotidienne chiffree de la base de production, dans un stockage Vercel Blob prive
+  (relue apres envoi, 30 jours). Recuperation : `node scripts/backup-store.mjs download dump.gpg`.
 - `audit.yml` : rapport d'audit quotidien des deux environnements et `npm audit`, alerte si un seuil est depasse.
 
 ## Supervision (Prometheus + Grafana)

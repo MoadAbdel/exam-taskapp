@@ -40,7 +40,7 @@ export default function Privacy() {
         <li>Vercel (hebergement, traitement a Paris).</li>
         <li>MongoDB Atlas (base de donnees, Paris).</li>
         <li>Grafana Labs (supervision, region Union europeenne).</li>
-        <li>GitHub (sauvegardes chiffrees).</li>
+        <li>Vercel Blob (sauvegardes chiffrees, stockage prive a Paris).</li>
       </ul>
       <p>
         Certains de ces prestataires sont des societes americaines. Les transferts eventuels sont encadres par leurs
