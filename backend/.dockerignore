@@ -1,0 +1,9 @@
+node_modules
+tests
+coverage
+logs
+.env
+.env.*
+Dockerfile
+eslint.config.js
+jsdoc.json

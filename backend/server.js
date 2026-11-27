@@ -1,28 +1,35 @@
-// Point d'entrée du serveur backend
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const connectDB = require('./config/db');
+/**
+ * @module server
+ * @description Point d'entree hors Vercel (poste local, conteneur Docker).
+ * Ouvre la base, ecoute le port et gere l'arret propre (SIGTERM envoye par Docker).
+ */
+const env = require('./config/env');
+const logger = require('./config/logger');
+const { connectDB, disconnectDB } = require('./config/db');
+const app = require('./app');
 
-// Connexion à la base de données
-connectDB();
-
-const app = express();
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/tasks', require('./routes/tasks'));
-
-// Ce handler ne catch que les erreurs synchrones. Les erreurs dans les promesses ne sont pas gérées.
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Something broke!');
+const server = app.listen(env.PORT, () => {
+  logger.info(`API demarree sur le port ${env.PORT}`, { env: env.APP_ENV });
+  connectDB(env.MONGO_URI).catch(() => {
+    /* deja journalise : l'API repond 503 tant que la base est absente */
+  });
 });
 
-const PORT = process.env.PORT || 5000;
+/**
+ * Arret propre : finit les requetes en cours puis ferme la base.
+ * @param {string} signal
+ */
+function shutdown(signal) {
+  logger.info(`Signal ${signal} recu, arret en cours`);
+  server.close(async () => {
+    await disconnectDB();
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(1), 10_000).unref();
+}
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+process.on('unhandledRejection', (reason) => {
+  logger.error('Promesse rejetee non geree', { reason: String(reason) });
+});

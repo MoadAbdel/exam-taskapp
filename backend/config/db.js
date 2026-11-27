@@ -1,16 +1,52 @@
+/**
+ * @module config/db
+ * @description Connexion MongoDB via Mongoose.
+ * La connexion est mise en cache : en serverless (Vercel), une meme instance
+ * de fonction traite plusieurs requetes et ne doit pas ouvrir une connexion par requete.
+ */
 const mongoose = require('mongoose');
+const debug = require('debug')('app:db');
+const logger = require('./logger');
 
-const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('MongoDB Connected...');
-  } catch (err) {
-    console.error(err.message);
-    process.exit(1);
+// Les filtres de requete construits a partir d'objets utilisateur ne peuvent plus
+// contenir d'operateurs ($ne, $gt...) : protection contre l'injection NoSQL.
+mongoose.set('sanitizeFilter', true);
+mongoose.set('strictQuery', true);
+
+/** @type {Promise<typeof mongoose> | null} */
+let connecting = null;
+
+/**
+ * Ouvre la connexion (une seule fois) et la renvoie.
+ * @param {string} uri Chaine de connexion MongoDB.
+ * @returns {Promise<typeof mongoose>}
+ */
+function connectDB(uri) {
+  if (mongoose.connection.readyState === 1) return Promise.resolve(mongoose);
+  if (!connecting) {
+    debug('ouverture de la connexion');
+    connecting = mongoose
+      .connect(uri, { serverSelectionTimeoutMS: 5000, maxPoolSize: 10 })
+      .then((m) => {
+        logger.info('MongoDB connecte', { host: m.connection.host });
+        return m;
+      })
+      .catch((err) => {
+        connecting = null; // la prochaine requete retentera
+        logger.error('Connexion MongoDB impossible', { error: err.message });
+        throw err;
+      });
   }
-};
+  return connecting;
+}
 
-module.exports = connectDB;
+/**
+ * Ferme la connexion (tests, arret propre du conteneur).
+ * @returns {Promise<void>}
+ */
+async function disconnectDB() {
+  connecting = null;
+  await mongoose.disconnect();
+}
+
+module.exports = { connectDB, disconnectDB };
