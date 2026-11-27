@@ -27,7 +27,7 @@ jobs:
     env:
       URL: ${{ github.ref_name == 'main' && 'https://exam-taskapp.vercel.app' || 'https://exam-taskapp-preprod.vercel.app' }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Attendre que Vercel serve ce commit
         run: |
           want="${GITHUB_SHA::7}"
