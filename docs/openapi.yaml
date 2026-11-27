@@ -154,3 +154,21 @@ paths:
         '200': { description: Supprimee }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
+  /account/export:
+    get:
+      summary: Telecharger mes donnees (acces et portabilite, RGPD)
+      security: [{ cookieAuth: [] }]
+      responses:
+        '200': { description: Fichier JSON du compte, des taches et des evenements de securite }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /account:
+    delete:
+      summary: Supprimer mon compte et mes taches (effacement, RGPD)
+      security: [{ cookieAuth: [] }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [password], properties: { password: { type: string } } } } }
+      responses:
+        '204': { description: Compte supprime }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: Mot de passe incorrect }

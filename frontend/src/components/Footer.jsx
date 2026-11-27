@@ -1,8 +1,12 @@
-/** Pied de page. L'annee est calculee (elle etait figee a 2025). */
+/** Pied de page : annee calculee et lien vers la politique de confidentialite. */
+import { Link } from 'react-router';
+
 export default function Footer() {
   return (
     <footer className="footer">
-      <p>&copy; {new Date().getFullYear()} Application Mes Taches</p>
+      <p>
+        &copy; {new Date().getFullYear()} Application Mes Taches - <Link to="/privacy">Confidentialite</Link>
+      </p>
     </footer>
   );
 }

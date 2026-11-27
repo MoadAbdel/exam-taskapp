@@ -3,6 +3,16 @@
 Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions : [SemVer](https://semver.org/lang/fr/).
 Les versions sont listees de la plus recente a la plus ancienne. Chaque entree cite le commit qui la porte.
 
+## [2.4.0] - 2026-11-27
+
+### Conformite RGPD
+
+- Page "Confidentialite" : donnees, finalites, bases legales, durees, sous-traitants, cookie, droits, CNIL.
+- Page "Mon compte" : export JSON des donnees (acces, portabilite) et suppression du compte avec mot de passe
+  (effacement) ; la piste d'audit est anonymisee.
+- Minimisation : IP tronquees et noms d'utilisateur retires avant envoi a Grafana ; IP tronquees et noms masques
+  dans le rapport d'audit (publie dans les journaux CI d'un depot public), messages d'erreur retires du rapport.
+- Cookie de session strictement necessaire : pas de bandeau de consentement. Aucun e-mail collecte : pas d'opt-in.
 ## [2.3.0] - 2026-11-27
 
 ### Ajouts (E25 et E26)
@@ -11,6 +21,8 @@ Les versions sont listees de la plus recente a la plus ancienne. Chaque entree c
   par lots, apres la reponse (`waitUntil`) : aucune attente pour l'utilisateur. Une panne de Loki ne bloque rien.
 - Journal d'acces : ajout du modele de route (`route`).
 - 4 tests du transport Loki.
+- Grafana Cloud : sondes Paris et Francfort, un tableau de bord par environnement, 6 alertes
+  (`monitoring/grafana-cloud/setup.mjs`).
 
 ## [2.2.0] - 2026-11-27
 

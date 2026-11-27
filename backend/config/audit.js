@@ -14,6 +14,8 @@ const LEVELS = {
   inscription: 'info',
   connexion: 'info',
   deconnexion: 'info',
+  export_donnees: 'info',
+  compte_supprime: 'info',
   tache_supprimee: 'info',
   connexion_echec: 'warn',
   jeton_invalide: 'warn',

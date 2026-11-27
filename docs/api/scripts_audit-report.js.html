@@ -37,6 +37,7 @@
  */
 const mongoose = require('mongoose');
 const AuditLog = require('../models/AuditLog');
+const { maskIp, maskName } = require('../config/privacy');
 
 /** Seuils d'alerte sur la periode analysee. */
 const THRESHOLDS = {
@@ -86,8 +87,9 @@ async function buildReport(days = 7) {
   const count = (e) => byEvent.find((x) => x._id === e)?.total || 0;
   const alerts = [];
   for (const ip of suspiciousIps) {
-    if (ip.echecs >= THRESHOLDS.echecsParIp) alerts.push(`Force brute probable : ${ip.echecs} echecs depuis ${ip._id}`);
-    if (ip.blocages >= THRESHOLDS.blocagesParIp) alerts.push(`IP bloquee ${ip.blocages} fois : ${ip._id}`);
+    if (ip.echecs >= THRESHOLDS.echecsParIp)
+      alerts.push(`Force brute probable : ${ip.echecs} echecs depuis ${maskIp(ip._id)}`);
+    if (ip.blocages >= THRESHOLDS.blocagesParIp) alerts.push(`IP bloquee ${ip.blocages} fois : ${maskIp(ip._id)}`);
   }
   if (count('jeton_invalide') >= THRESHOLDS.jetonsInvalides) {
     alerts.push(`${count('jeton_invalide')} jetons falsifies ou alteres`);
@@ -113,14 +115,15 @@ function toMarkdown(report, envName) {
   lines.push('', '### IP a surveiller', '', '| IP | Echecs | Blocages | Jetons invalides | Comptes vises |');
   lines.push('| --- | --- | --- | --- | --- |');
   for (const ip of report.suspiciousIps) {
-    const comptes = ip.comptesVises.filter(Boolean).slice(0, 5).join(', ');
-    lines.push(`| ${ip._id} | ${ip.echecs} | ${ip.blocages} | ${ip.jetons} | ${comptes} |`);
+    // Rapport publie dans les journaux CI (depot public) : IP tronquees et noms masques.
+    const comptes = ip.comptesVises.filter(Boolean).slice(0, 5).map(maskName).join(', ');
+    lines.push(`| ${maskIp(ip._id)} | ${ip.echecs} | ${ip.blocages} | ${ip.jetons} | ${comptes} |`);
   }
   if (!report.suspiciousIps.length) lines.push('| (aucune) | | | | |');
 
   lines.push('', '### Dernieres erreurs serveur', '');
   for (const e of report.errors) {
-    lines.push(`- ${e.createdAt.toISOString()} ${e.method} ${e.path} requestId=${e.requestId} : ${e.meta?.error}`);
+    lines.push(`- ${e.createdAt.toISOString()} ${e.method} ${e.path} requestId=${e.requestId} `);
   }
   if (!report.errors.length) lines.push('- aucune');
 
@@ -168,13 +171,13 @@ module.exports = { buildReport, toMarkdown, THRESHOLDS };
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-app.html">app</a></li><li><a href="module-config_audit.html">config/audit</a></li><li><a href="module-config_db.html">config/db</a></li><li><a href="module-config_env.html">config/env</a></li><li><a href="module-config_logger.html">config/logger</a></li><li><a href="module-config_lokiTransport.html">config/lokiTransport</a></li><li><a href="module-config_metrics.html">config/metrics</a></li><li><a href="module-middleware_auth.html">middleware/auth</a></li><li><a href="module-middleware_requestLogger.html">middleware/requestLogger</a></li><li><a href="module-middleware_validate.html">middleware/validate</a></li><li><a href="module-models_AuditLog.html">models/AuditLog</a></li><li><a href="module-models_Task.html">models/Task</a></li><li><a href="module-models_User.html">models/User</a></li><li><a href="module-routes_auth.html">routes/auth</a></li><li><a href="module-routes_tasks.html">routes/tasks</a></li><li><a href="module-scripts_audit-report.html">scripts/audit-report</a></li><li><a href="module-server.html">server</a></li><li><a href="module-validators_schemas.html">validators/schemas</a></li></ul><h3>Classes</h3><ul><li><a href="module-config_lokiTransport-LokiTransport.html">LokiTransport</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-app.html">app</a></li><li><a href="module-config_audit.html">config/audit</a></li><li><a href="module-config_db.html">config/db</a></li><li><a href="module-config_env.html">config/env</a></li><li><a href="module-config_logger.html">config/logger</a></li><li><a href="module-config_lokiTransport.html">config/lokiTransport</a></li><li><a href="module-config_metrics.html">config/metrics</a></li><li><a href="module-config_privacy.html">config/privacy</a></li><li><a href="module-middleware_auth.html">middleware/auth</a></li><li><a href="module-middleware_requestLogger.html">middleware/requestLogger</a></li><li><a href="module-middleware_validate.html">middleware/validate</a></li><li><a href="module-models_AuditLog.html">models/AuditLog</a></li><li><a href="module-models_Task.html">models/Task</a></li><li><a href="module-models_User.html">models/User</a></li><li><a href="module-routes_account.html">routes/account</a></li><li><a href="module-routes_auth.html">routes/auth</a></li><li><a href="module-routes_tasks.html">routes/tasks</a></li><li><a href="module-scripts_audit-report.html">scripts/audit-report</a></li><li><a href="module-server.html">server</a></li><li><a href="module-validators_schemas.html">validators/schemas</a></li></ul><h3>Classes</h3><ul><li><a href="module-config_lokiTransport-LokiTransport.html">LokiTransport</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Fri Nov 27 2026 12:21:37 GMT+0100 (heure normale d’Europe centrale)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Fri Nov 27 2026 12:38:50 GMT+0100 (heure normale d’Europe centrale)
 </footer>
 
 <script> prettyPrint(); </script>
