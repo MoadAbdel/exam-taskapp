@@ -47,7 +47,10 @@ export default function TaskForm({ onCreate }) {
           placeholder="Ajouter une tache..."
           maxLength={200}
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => {
+            setTitle(e.target.value);
+            if (error) setError(''); // le message disparait des que l'utilisateur corrige
+          }}
         />
         <button type="submit" className="btn btn-inline" disabled={pending}>
           Ajouter

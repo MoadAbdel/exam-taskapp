@@ -45,6 +45,9 @@ conteneurisation, CI/CD, journalisation et supervision (E21 a E26).
 | B12 | Suppression basee sur un etat perime (`tasks.filter` dans une closure) | Mises a jour fonctionnelles de l'etat | b7be6b1 |
 | B13 | Pas de lien Inscription, deconnexion sans redirection, inscription sans connexion | Liens dans l'en-tete, redirection, connexion automatique apres inscription | b7be6b1 |
 | B14 | URL de l'API en dur (`http://localhost:5000`) : ne marche pas en production | URL relative `/api` (meme origine) | b7be6b1 |
+| B16 | Trouve par le test navigateur : React reutilise le formulaire entre Connexion et Inscription, l'erreur et la saisie d'une page restent sur l'autre | Cle (`key`) differente par page | 80f5534 |
+| B17 | Trouve par le test navigateur : la case "terminee" ne reagit qu'apres la reponse serveur | Mise a jour optimiste avec retour arriere en cas d'echec | e0f7d87 |
+| B18 | Le message d'erreur d'ajout reste affiche apres correction | Effacement a la saisie | 4d71be8 |
 | B15 | Mise en page : `100vw` cree un scroll horizontal, `<header>` imbrique, `lang="en"`, annee figee 2025, options Mongoose obsoletes | CSS corrige, HTML semantique, `lang="fr"`, annee dynamique, options retirees | b7be6b1, f1d3041 |
 
 ### Ajouts
@@ -55,6 +58,7 @@ conteneurisation, CI/CD, journalisation et supervision (E21 a E26).
 - ESLint et Prettier - f1d3041, b7be6b1
 - Dockerfiles (utilisateur non root, healthcheck) et `docker-compose.yml` (MongoDB, API, nginx) - 1bbc4a3
 - `scripts/smoke-test.sh` : 23 verifications de bout en bout sur un environnement deploye - 1bbc4a3
+- `scripts/e2e-captures.mjs` : parcours complet dans Chromium (Playwright) + captures d'ecran - 80f5534
 - CI/CD GitHub Actions, sonde de supervision, sauvegarde chiffree, Dependabot, deploiement Vercel preprod et production
 - Documentation JSDoc generee (`npm run docs`) et specification OpenAPI (`docs/openapi.yaml`)
 

@@ -1,54 +1,41 @@
-name: Deploiement
-# Livraison continue. La meme chaine sert aux deux environnements :
-#   push sur develop -> pre-production (projet Vercel exam-taskapp-preprod)
-#   push sur main    -> production     (projet Vercel exam-taskapp)
-# Etapes : CI complete -> deploiement Vercel -> test de fumee de bout en bout sur l'URL publique.
+name: Verification apres deploiement
+# Livraison continue (meme chaine pour les deux environnements) :
+#   push sur develop -> Vercel construit et deploie le projet exam-taskapp-preprod (pre-production)
+#   push sur main    -> Vercel construit et deploie le projet exam-taskapp (production)
+# Vercel signale la fin du deploiement a GitHub (evenement deployment_status).
+# Ce workflow lance alors le test de fumee de bout en bout sur l'URL publique de l'environnement.
+# Un echec rend le commit rouge et envoie un e-mail : on revient en arriere avec "vercel rollback".
 on:
-  push:
-    branches: [main, develop]
+  deployment_status:
   workflow_dispatch:
+    inputs:
+      url:
+        description: URL a tester
+        default: https://exam-taskapp.vercel.app
 
 permissions:
   contents: read
-  packages: write
-
-concurrency:
-  group: deploy-${{ github.ref_name }}
-  cancel-in-progress: false
 
 jobs:
-  ci:
-    uses: ./.github/workflows/ci.yml
-
-  deploy:
-    needs: ci
+  smoke:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment_status.state == 'success' && startsWith(github.event.deployment.environment, 'Production'))
     runs-on: ubuntu-latest
-    environment:
-      name: ${{ github.ref_name == 'main' && 'production' || 'preprod' }}
-      url: ${{ steps.vars.outputs.url }}
-    env:
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with: { node-version: 22 }
-      - name: Choix de l'environnement
+      - name: Choix de l'URL publique
         id: vars
-        run: |
-          if [ "${GITHUB_REF_NAME}" = "main" ]; then
-            echo "project=${{ secrets.VERCEL_PROJECT_ID_PROD }}" >> "$GITHUB_OUTPUT"
-            echo "url=https://exam-taskapp.vercel.app" >> "$GITHUB_OUTPUT"
-          else
-            echo "project=${{ secrets.VERCEL_PROJECT_ID_PREPROD }}" >> "$GITHUB_OUTPUT"
-            echo "url=https://exam-taskapp-preprod.vercel.app" >> "$GITHUB_OUTPUT"
-          fi
-      - run: npm install --global vercel@latest
-      - name: Deploiement Vercel
         env:
-          VERCEL_PROJECT_ID: ${{ steps.vars.outputs.project }}
+          ENV_NAME: ${{ github.event.deployment.environment }}
+          INPUT_URL: ${{ inputs.url }}
         run: |
-          url=$(vercel deploy --prod --yes --token "$VERCEL_TOKEN")
-          echo "Deploiement : $url" | tee -a "$GITHUB_STEP_SUMMARY"
-      - name: Test de fumee sur l'URL publique
+          case "$ENV_NAME" in
+            *exam-taskapp-preprod*) url=https://exam-taskapp-preprod.vercel.app ;;
+            *exam-taskapp*)         url=https://exam-taskapp.vercel.app ;;
+            *)                      url="$INPUT_URL" ;;
+          esac
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Environnement : ${ENV_NAME:-manuel} -> $url" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Test de fumee (23 verifications)
         run: bash scripts/smoke-test.sh "${{ steps.vars.outputs.url }}" | tee -a "$GITHUB_STEP_SUMMARY"

@@ -41,7 +41,10 @@ app.use(requestLogger);
  * @returns {503} Base de donnees injoignable.
  */
 app.get('/api/health', async (req, res) => {
-  const base = { env: env.APP_ENV, version: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'local' };
+  const base = {
+    env: env.APP_ENV,
+    version: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || process.env.VERCEL_DEPLOYMENT_ID || 'local',
+  };
   try {
     await connectDB(env.MONGO_URI);
     await mongoose.connection.db.admin().ping();

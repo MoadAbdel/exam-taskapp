@@ -46,12 +46,19 @@ export default function Tasks() {
     setTasks((prev) => [res.data, ...prev]);
   };
 
+  /**
+   * Mise a jour optimiste : l'ecran change tout de suite (reponse immediate au clic),
+   * puis on applique la version du serveur, ou on revient a l'etat precedent en cas d'erreur.
+   */
   const updateTask = async (id, changes) => {
+    const previous = tasks.find((t) => t._id === id);
+    setError('');
+    setTasks((prev) => prev.map((t) => (t._id === id ? { ...t, ...changes } : t)));
     try {
-      setError('');
       const res = await api.put(`/tasks/${id}`, changes);
       setTasks((prev) => prev.map((t) => (t._id === id ? res.data : t)));
     } catch (err) {
+      if (previous) setTasks((prev) => prev.map((t) => (t._id === id ? previous : t)));
       handleError(err);
     }
   };

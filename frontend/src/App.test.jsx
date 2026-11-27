@@ -130,6 +130,16 @@ describe('taches', () => {
     expect(document.querySelector('img')).toBeNull();
   });
 
+  test('echec de mise a jour : la case revient a son etat et un message s affiche', async () => {
+    api.get.mockResolvedValueOnce({ data: { user } }).mockResolvedValueOnce({ data: tasks });
+    api.put.mockRejectedValueOnce(apiError(500, 'Erreur interne du serveur.'));
+    render(<App />);
+    const box = await screen.findByRole('checkbox');
+    await userEvent.click(box);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Erreur interne');
+    expect(box).not.toBeChecked();
+  });
+
   test('erreur serveur au chargement : message visible', async () => {
     api.get.mockResolvedValueOnce({ data: { user } }).mockRejectedValueOnce(apiError(500, 'Erreur interne du serveur.'));
     render(<App />);
