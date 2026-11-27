@@ -3,6 +3,15 @@
 Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Versions : [SemVer](https://semver.org/lang/fr/).
 Les versions sont listees de la plus recente a la plus ancienne. Chaque entree cite le commit qui la porte.
 
+## [2.3.0] - 2026-11-27
+
+### Ajouts (E25 et E26)
+
+- Envoi des logs et evenements d'audit de la pre-production et de la production vers Grafana Cloud (Loki),
+  par lots, apres la reponse (`waitUntil`) : aucune attente pour l'utilisateur. Une panne de Loki ne bloque rien.
+- Journal d'acces : ajout du modele de route (`route`).
+- 4 tests du transport Loki.
+
 ## [2.2.0] - 2026-11-27
 
 ### Ajouts (E26 : supervision)

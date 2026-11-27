@@ -25,6 +25,19 @@ const schema = Joi.object({
   // Endpoint /metrics (Prometheus). Desactive par defaut ; jeton Bearer optionnel pour le proteger.
   METRICS_ENABLED: Joi.boolean().default(false),
   METRICS_TOKEN: Joi.string().min(16).allow('').default(''),
+  // Envoi des logs vers Grafana Loki (Grafana Cloud). Les trois valeurs vont ensemble.
+  LOKI_URL: Joi.string()
+    .uri({ scheme: ['https', 'http'] })
+    .allow('')
+    .default(''),
+  LOKI_USER: Joi.string()
+    .allow('')
+    .default('')
+    .when('LOKI_URL', { is: Joi.string().min(1), then: Joi.required() }),
+  LOKI_TOKEN: Joi.string()
+    .allow('')
+    .default('')
+    .when('LOKI_URL', { is: Joi.string().min(1), then: Joi.required() }),
 }).unknown(true);
 
 const { value, error } = schema.validate(process.env, { abortEarly: false });
