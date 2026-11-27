@@ -10,3 +10,5 @@ logs/
 !.env.docker.example
 .vercel
 .env*
+docs/captures/
+docs/REPONSES-EXAMEN.md
