@@ -46,6 +46,7 @@ await shot('03-mauvais-identifiants');
 
 // 4. Inscription avec mot de passe faible puis valide.
 await page.getByRole('link', { name: 'Inscription' }).click();
+await page.getByRole('heading', { name: 'Inscription' }).waitFor();
 await page.getByLabel("Nom d'utilisateur").fill(user);
 await page.getByLabel('Mot de passe').fill('123');
 await page.getByRole('button', { name: 'Creer mon compte' }).click();
