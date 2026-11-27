@@ -10,7 +10,7 @@ const User = require('../models/User');
 const validate = require('../middleware/validate');
 const schemas = require('../validators/schemas');
 const { auth, signToken, cookieOptions, COOKIE_NAME } = require('../middleware/auth');
-const logger = require('../config/logger');
+const { audit } = require('../config/audit');
 
 const router = express.Router();
 
@@ -25,7 +25,11 @@ const authLimiter = rateLimit({
   standardHeaders: 'draft-8',
   legacyHeaders: false,
   skipSuccessfulRequests: true,
-  message: { msg: 'Trop de tentatives. Reessayez dans 15 minutes.' },
+  // Le blocage est trace : une suite de blocages depuis une meme IP signale une attaque par force brute.
+  handler: async (req, res, _next, options) => {
+    await audit('limite_atteinte', req, { username: req.body?.username, status: options.statusCode });
+    res.status(options.statusCode).json({ msg: 'Trop de tentatives. Reessayez dans 15 minutes.' });
+  },
 });
 
 /**
@@ -46,7 +50,7 @@ router.post('/register', authLimiter, validate(schemas.register), async (req, re
 
   const hash = await bcrypt.hash(password, 12);
   const user = await User.create({ username, password: hash });
-  logger.info('audit:inscription', { userId: user.id, requestId: req.id });
+  await audit('inscription', req, { userId: user.id, username, status: 201 });
 
   res.cookie(COOKIE_NAME, signToken(user.id), cookieOptions);
   return res.status(201).json({ user: { _id: user.id, username: user.username } });
@@ -67,11 +71,11 @@ router.post('/login', authLimiter, validate(schemas.login), async (req, res) => 
   const isMatch = await bcrypt.compare(password, user ? user.password : DUMMY_HASH);
 
   if (!user || !isMatch) {
-    logger.warn('audit:connexion_echec', { username, ip: req.ip, requestId: req.id });
+    await audit('connexion_echec', req, { username, status: 401, meta: { compteExiste: !!user } });
     return res.status(401).json({ msg: "Nom d'utilisateur ou mot de passe incorrect." });
   }
 
-  logger.info('audit:connexion', { userId: user.id, requestId: req.id });
+  await audit('connexion', req, { userId: user.id, username, status: 200 });
   res.cookie(COOKIE_NAME, signToken(user.id), cookieOptions);
   return res.json({ user: { _id: user.id, username: user.username } });
 });
@@ -81,7 +85,8 @@ router.post('/login', authLimiter, validate(schemas.login), async (req, res) => 
  * @summary Ferme la session (supprime le cookie).
  * @returns {204}
  */
-router.post('/logout', (req, res) => {
+router.post('/logout', async (req, res) => {
+  if (req.cookies?.[COOKIE_NAME]) await audit('deconnexion', req, { status: 204 });
   res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: undefined });
   return res.status(204).end();
 });

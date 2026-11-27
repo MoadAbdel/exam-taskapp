@@ -1,0 +1,56 @@
+name: Audit
+# Outil d'audit des deux environnements, chaque jour et a la demande.
+# 1. Securite applicative : rapport sur la piste d'audit (collection auditlogs) des 7 derniers jours :
+#    evenements par type, IP suspectes, erreurs serveur avec requestId.
+#    Alerte (workflow en echec + e-mail) si un seuil est depasse : force brute, IP bloquee,
+#    jetons falsifies, erreurs serveur.
+# 2. Dependances : npm audit des paquets de production (failles connues).
+# Le rapport complet est visible dans le resume du run (onglet Actions).
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      days:
+        description: Nombre de jours analyses
+        default: '7'
+
+permissions:
+  contents: read
+
+jobs:
+  journal:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [production, preprod]
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: 26, cache: npm, cache-dependency-path: backend/package-lock.json }
+      - run: npm ci --omit=dev --ignore-scripts
+      - name: Rapport d'audit ${{ matrix.env }}
+        env:
+          MONGO_URI: ${{ matrix.env == 'production' && secrets.MONGO_URI_PROD || secrets.MONGO_URI_PREPROD }}
+          APP_ENV: ${{ matrix.env }}
+        run: node scripts/audit-report.js --days=${{ inputs.days || 7 }} --fail-on-alert | tee -a "$GITHUB_STEP_SUMMARY"
+
+  dependances:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: 26 }
+      - name: npm audit ${{ matrix.dir }}
+        working-directory: ${{ matrix.dir }}
+        run: |
+          echo "## npm audit : ${{ matrix.dir }}" >> "$GITHUB_STEP_SUMMARY"
+          npm audit --omit=dev --audit-level=moderate | tee -a "$GITHUB_STEP_SUMMARY"

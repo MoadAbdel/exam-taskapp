@@ -12,6 +12,7 @@ const env = require('./config/env');
 const logger = require('./config/logger');
 const { connectDB } = require('./config/db');
 const requestLogger = require('./middleware/requestLogger');
+const { audit } = require('./config/audit');
 
 const app = express();
 
@@ -77,11 +78,13 @@ app.use((req, res) => res.status(404).json({ msg: 'Route introuvable.' }));
 
 // Gestionnaire d'erreurs. Express 5 transmet aussi les erreurs des fonctions async.
 // eslint-disable-next-line no-unused-vars
-app.use((err, req, res, next) => {
+app.use(async (err, req, res, next) => {
   if (err.type === 'entity.parse.failed') return res.status(400).json({ msg: 'JSON invalide.' });
   if (err.type === 'entity.too.large') return res.status(413).json({ msg: 'Requete trop volumineuse.' });
   if (err.code === 11000) return res.status(409).json({ msg: 'Cette valeur existe deja.' });
   logger.error('erreur non geree', { requestId: req.id, error: err.message, stack: err.stack });
+  // Trace d'audit : on retrouve l'erreur avec le requestId communique a l'utilisateur.
+  await audit('erreur_serveur', req, { status: 500, meta: { error: err.message } });
   // Pas de detail technique vers le client.
   return res.status(500).json({ msg: 'Erreur interne du serveur.', requestId: req.id });
 });

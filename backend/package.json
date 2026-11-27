@@ -1,6 +1,6 @@
 {
   "name": "taskapp-backend",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "API REST de l'application de gestion de taches (Express + MongoDB)",
   "main": "server.js",
   "private": true,
@@ -15,7 +15,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "docs": "jsdoc -c jsdoc.json"
+    "docs": "jsdoc -c jsdoc.json",
+    "audit:report": "node scripts/audit-report.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

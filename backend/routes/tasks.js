@@ -10,7 +10,7 @@ const Task = require('../models/Task');
 const { auth } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const schemas = require('../validators/schemas');
-const logger = require('../config/logger');
+const { audit } = require('../config/audit');
 
 const router = express.Router();
 router.use(auth);
@@ -66,7 +66,7 @@ router.put('/:id', validate(schemas.objectIdParam, 'params'), validate(schemas.u
 router.delete('/:id', validate(schemas.objectIdParam, 'params'), async (req, res) => {
   const task = await Task.findOneAndDelete({ _id: req.params.id, user: req.user.id });
   if (!task) return res.status(404).json({ msg: 'Tache introuvable.' });
-  logger.info('audit:tache_supprimee', { userId: req.user.id, taskId: req.params.id, requestId: req.id });
+  await audit('tache_supprimee', req, { status: 200, meta: { taskId: req.params.id } });
   return res.json({ msg: 'Tache supprimee.' });
 });
 

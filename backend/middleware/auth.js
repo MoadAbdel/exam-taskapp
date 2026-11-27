@@ -4,6 +4,7 @@
  */
 const jwt = require('jsonwebtoken');
 const env = require('../config/env');
+const { audit } = require('../config/audit');
 
 /** Nom du cookie de session. */
 const COOKIE_NAME = 'token';
@@ -40,20 +41,25 @@ function signToken(userId) {
  * En cas de succes, `req.user.id` contient l'identifiant de l'utilisateur.
  * @type {function}
  */
-function auth(req, res, next) {
+async function auth(req, res, next) {
   const token = req.cookies?.[COOKIE_NAME];
   if (!token) {
     return res.status(401).json({ msg: 'Authentification requise.' });
   }
+  let decoded;
   try {
     // L'algorithme est impose : un jeton "alg: none" ou RS256 est refuse.
-    const decoded = jwt.verify(token, env.JWT_SECRET, { algorithms: ['HS256'] });
-    req.user = decoded.user;
-    return next();
-  } catch {
+    decoded = jwt.verify(token, env.JWT_SECRET, { algorithms: ['HS256'] });
+  } catch (err) {
+    // Un jeton expire est normal. Un jeton falsifie ou altere est trace (tentative d'attaque).
+    if (err.name !== 'TokenExpiredError') {
+      await audit('jeton_invalide', req, { status: 401, meta: { raison: err.message } });
+    }
     res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: undefined });
     return res.status(401).json({ msg: 'Session expiree ou invalide. Reconnectez-vous.' });
   }
+  req.user = decoded.user;
+  return next();
 }
 
 module.exports = { auth, signToken, cookieOptions, COOKIE_NAME };
