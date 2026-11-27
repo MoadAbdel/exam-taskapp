@@ -1,14 +1,29 @@
+# Mises a jour hebdomadaires des dependances.
+# Elles visent develop : elles passent par la CI et la pre-production avant la production.
+# Regroupees par ecosysteme : une seule pull request par categorie et par semaine.
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /backend
+    target-branch: develop
     schedule: { interval: weekly }
+    groups:
+      backend: { patterns: ['*'] }
   - package-ecosystem: npm
     directory: /frontend
+    target-branch: develop
     schedule: { interval: weekly }
+    groups:
+      frontend: { patterns: ['*'] }
   - package-ecosystem: docker
     directories: [/backend, /frontend]
+    target-branch: develop
     schedule: { interval: weekly }
+    groups:
+      docker: { patterns: ['*'] }
   - package-ecosystem: github-actions
     directory: /
+    target-branch: develop
     schedule: { interval: weekly }
+    groups:
+      actions: { patterns: ['*'] }
